@@ -1,31 +1,30 @@
-import { Section, Cell, Image, List } from '@telegram-apps/telegram-ui';
+import { Banner, Button, Section, Cell, List } from '@telegram-apps/telegram-ui';
 import type { FC } from 'react';
 
 import { Link } from '@/components/Link/Link.tsx';
 import { Page } from '@/components/Page.tsx';
 
-import tonSvg from './ton.svg';
+import banner from './banner.jpg';
+import { Header } from '@/components/Header/Header';
 
 export const IndexPage: FC = () => {
   return (
     <Page back={false}>
+
+      <Header />
+
+      <Banner
+      type="inline"
+      background={<img alt="Free Spins Banner" src={banner} style={{width: '100%', filter: 'brightness(0.4)'}}/>}
+      header="Free Spins 🍀"
+      subheader="You can get up to 50 free spins every day!"
+    >
+      <Button mode="white" size="s" > Try it out </Button>
+    </Banner>  
+
       <List>
         <Section
-          header="Features"
-          footer="You can use these pages to learn more about features, provided by Telegram Mini Apps and other useful projects"
-        >
-          <Link to="/ton-connect">
-            <Cell
-              before={<Image src={tonSvg} style={{ backgroundColor: '#007AFF' }}/>}
-              subtitle="Connect your TON wallet"
-            >
-              TON Connect
-            </Cell>
-          </Link>
-        </Section>
-        <Section
           header="Application Launch Data"
-          footer="These pages help developer to learn more about current launch information"
         >
           <Link to="/init-data">
             <Cell subtitle="User data, chat information, technical data">Init Data</Cell>

@@ -1,0 +1,27 @@
+.header__container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.header__left,
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* optional spacing inside each side */
+}
+
+.header__icon {
+  width: 32px; /* 40px icon + 3px border x2 */
+  height: 32px;
+  border: 3px solid #5a5a5a;       /* optical border */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0088CC;
+  background: linear-gradient(90deg, rgba(0, 136, 204, 1) 0%, rgba(36, 161, 222, 1) 50%, rgba(0, 136, 204, 1) 100%);
+  box-sizing: border-box;
+}

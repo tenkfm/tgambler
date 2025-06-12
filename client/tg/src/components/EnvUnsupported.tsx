@@ -20,7 +20,7 @@ export function EnvUnsupported() {
     >
       <Placeholder
         header="Oops"
-        description="You are using too old Telegram client to run this application"
+        description="Run this app inside Telegram to use it. @tg_gifts_casino_bot"
       >
         <img
           alt="Telegram sticker"
