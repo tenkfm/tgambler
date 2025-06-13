@@ -28,19 +28,6 @@ app.add_middleware(
 async def root():
     return {"message": "Hello, World!"}
 
-
-@app.post("/invoice")
-async def invoice(request: Request):
-    request_data = await request.json()
-    invoice_request = InvoiceRequest(**request_data)
-    
-    # Create the invoice
-    try:
-        invoice = create_invoice(invoice_request.th_id, invoice_request.amount)
-        return invoice
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-    
 # Neet to set a webhook - https://api.telegram.org/bot7785197610:AAGbHyutLPa3R0XiSdliwbfoYnQYZF15E8A/setWebhook?url=https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/webhooks/telegram
 @app.post("/webhooks/telegram")
 async def telegram_webhook(request: Request):
@@ -69,6 +56,25 @@ async def telegram_webhook(request: Request):
         except Exception as e:  
             print("[error, data not valid]", str(e))  
             return {"status": "fail"}
+
+@app.post("/invoice")
+async def invoice(request: Request):
+    request_data = await request.json()
+    invoice_request = InvoiceRequest(**request_data)
+    
+    print("Received invoice request:", invoice_request)
+    # Create the invoice
+    try:
+        print("start create_invoice")
+        th_id = invoice_request.th_id
+        amount = invoice_request.amount
+        invoice = create_invoice(th_id, amount)
+        print("create_invoice done")
+        return invoice
+    except Exception as e:
+        print("create_invoice error", str(e))
+        return {"status": "error", "message": str(e)}
+
 
 def create_invoice(th_id, amount) -> dict:
     order_id = th_id
