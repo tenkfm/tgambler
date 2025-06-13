@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { invoice } from '@telegram-apps/sdk';
-import { Banner, Button, Section, Cell, List } from '@telegram-apps/telegram-ui';
+import { Banner, Button } from '@telegram-apps/telegram-ui';
 
 import {
   initDataRaw as _initDataRaw,
@@ -27,7 +27,7 @@ export const IndexPage: FC = () => {
     setMessage(null);
 
     axios.post(
-      "https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/invoice",
+      "https://symmetrical-space-goldfish-64jjvgw67cx5xx-8000.app.github.dev/invoice",
       {
         th_id: initDataState?.user?.id || 0,
         amount: 10
@@ -67,7 +67,7 @@ export const IndexPage: FC = () => {
       <Header />
       
       <Banner
-        type="inline"
+        type="section"
         background={<img alt="Free Spins Banner" src={banner} style={{ width: '100%', filter: 'brightness(0.4)' }} />}
         header="Buy a Good Luck for only 10 ★"
         subheader="You can get up to 50 free spins every day!"
@@ -83,19 +83,11 @@ export const IndexPage: FC = () => {
         </div>
       )}
 
-      <List>
-        <Section header="Application Launch Data">
-          <Link to="/init-data">
-            <Cell subtitle="User data, chat information, technical data">Init Data</Cell>
-          </Link>
-          <Link to="/launch-params">
-            <Cell subtitle="Platform identifier, Mini Apps version, etc.">Launch Parameters</Cell>
-          </Link>
-          <Link to="/theme-params">
-            <Cell subtitle="Telegram application palette information">Theme Parameters</Cell>
-          </Link>
-        </Section>
-      </List>
+      <Link to="/spinner">
+        <Button mode="primary" size="m" style={{ margin: '16px auto', display: 'block' }}>
+          Spin
+        </Button>
+      </Link>
     </Page>
   );
 };

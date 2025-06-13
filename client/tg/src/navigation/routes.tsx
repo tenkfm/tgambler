@@ -4,6 +4,7 @@ import { IndexPage } from '@/pages/IndexPage/IndexPage';
 import { InitDataPage } from '@/pages/InitDataPage.tsx';
 import { LaunchParamsPage } from '@/pages/LaunchParamsPage.tsx';
 import { ThemeParamsPage } from '@/pages/ThemeParamsPage.tsx';
+import { SpinnerPage } from '@/pages/SpinnerPage/SpinnerPage.tsx';
 import { TONConnectPage } from '@/pages/TONConnectPage/TONConnectPage';
 
 interface Route {
@@ -18,6 +19,7 @@ export const routes: Route[] = [
   { path: '/init-data', Component: InitDataPage, title: 'Init Data' },
   { path: '/theme-params', Component: ThemeParamsPage, title: 'Theme Params' },
   { path: '/launch-params', Component: LaunchParamsPage, title: 'Launch Params' },
+  { path: '/spinner', Component: SpinnerPage, title: 'Spinner' },
   {
     path: '/ton-connect',
     Component: TONConnectPage,
