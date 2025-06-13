@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from settings import Settings
+from functools import lru_cache
 from fastapi.middleware.cors import CORSMiddleware
 from models import Payment, InvoiceRequest
 import requests
 
-import requests as req
+@lru_cache()
+def get_settings():
+    return Settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,8 +16,8 @@ async def lifespan(app: FastAPI):
     print("Starting up the application...")
     yield
 
-
 app = FastAPI(lifespan=lifespan)
+settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,9 +29,9 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello, World!"}
+    return {"message": "Hello Bot 🤖 "}
 
-# Neet to set a webhook - https://api.telegram.org/bot7785197610:AAGbHyutLPa3R0XiSdliwbfoYnQYZF15E8A/setWebhook?url=https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/webhooks/telegram
+# Neet to set a webhook - https://api.telegram.org/botXXXXX/setWebhook?url=https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/webhooks/telegram
 @app.post("/webhooks/telegram")
 async def telegram_webhook(request: Request):
     update = await request.json()
@@ -37,7 +40,7 @@ async def telegram_webhook(request: Request):
         #  update= {'update_id': 101074410, 'pre_checkout_query': {'id': '1336649942687528887', 'from': {'id': 311213066, 'is_bot': False, 'first_name': 'Tony', 'username': 'call_me_anton', 'language_code': 'en', 'is_premium': True}, 'currency': 'XTR', 'total_amount': 3, 'invoice_payload': '311213066&&&e639736a-cd60-48cf-bdc3-a4d94cea9f21'}}
         print("[pre_checkout_query] received")
         id = update['pre_checkout_query']['id']
-        url = f"https://api.telegram.org/bot7785197610:AAGbHyutLPa3R0XiSdliwbfoYnQYZF15E8A/answerPreCheckoutQuery"
+        url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/answerPreCheckoutQuery"
         requests.post(url, data={"pre_checkout_query_id": id, "ok": True})
         return {"status": "success"}
     
@@ -100,7 +103,7 @@ def create_invoice(th_id, amount) -> dict:
     }
 
     headers = {'Content-Type': 'application/json'}
-    url = f"https://api.telegram.org/bot7785197610:AAGbHyutLPa3R0XiSdliwbfoYnQYZF15E8A/createInvoiceLink"
+    url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/createInvoiceLink"
     response = requests.post(url, json=data, headers=headers)
 
     if response.ok and response.json().get('ok'):
