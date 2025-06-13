@@ -84,7 +84,7 @@ export const IndexPage: FC = () => {
       )}
 
       <Link to="/spinner">
-        <Button mode="primary" size="m" style={{ margin: '16px auto', display: 'block' }}>
+          <Button mode="filled" size="m" style={{ margin: '16px auto', display: 'block' }}>
           Spin
         </Button>
       </Link>
