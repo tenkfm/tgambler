@@ -12,7 +12,7 @@ import type { FC } from 'react';
 import axios from 'axios';
 
 import { Link } from '@/components/Link/Link.tsx';
-import { Page } from '@/components/Page.tsx';
+import { Page } from '@/components/Page/Page';
 import { Header } from '@/components/Header/Header';
 
 import banner from './banner.jpg';
@@ -63,31 +63,31 @@ export const IndexPage: FC = () => {
   };
 
   return (
-    <Page back={false}>
-      <Header />
-      
-      <Banner
-        type="section"
-        background={<img alt="Free Spins Banner" src={banner} style={{ width: '100%', filter: 'brightness(0.4)' }} />}
-        header="Buy a Good Luck for only 10 ★"
-        subheader="You can get up to 50 free spins every day!"
-      >
-        <Button mode="white" size="s" loading={isLoading} onClick={payByTelegramStar}>
-          Buy a Good Luck
-        </Button>
-      </Banner>
+    <Page back={false} header={ <Header /> }>
+      <div className="container">
+        <Banner
+          type="section"
+          background={<img alt="Free Spins Banner" src={banner} style={{ width: '100%', filter: 'brightness(0.4)' }} />}
+          header="Buy a Good Luck for only 10 ★"
+          subheader="You can get up to 50 free spins every day!"
+        >
+          <Button mode="white" size="s" loading={isLoading} onClick={payByTelegramStar}>
+            Buy a Good Luck
+          </Button>
+        </Banner>
 
-      {message && (
-        <div style={{ textAlign: 'center', margin: '16px', fontSize: '16px' }}>
-          {message}
-        </div>
-      )}
+        {message && (
+          <div style={{ textAlign: 'center', margin: '16px', fontSize: '16px' }}>
+            {message}
+          </div>
+        )}
 
-      <Link to="/spinner">
-          <Button mode="filled" size="m" style={{ margin: '16px auto', display: 'block' }}>
-          Spin
-        </Button>
-      </Link>
+        <Link to="/spinner">
+            <Button mode="filled" size="m" style={{ margin: '16px auto', display: 'block' }}>
+            Spin
+          </Button>
+        </Link>
+      </div>
     </Page>
   );
 };

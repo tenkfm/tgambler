@@ -13,7 +13,7 @@ import {
 import type { FC } from 'react';
 
 import { DisplayData } from '@/components/DisplayData/DisplayData.tsx';
-import { Page } from '@/components/Page.tsx';
+import { Page } from '@/components/Page/Page';
 import { bem } from '@/css/bem.ts';
 
 import './TONConnectPage.css';

@@ -3,7 +3,7 @@ import { List } from '@telegram-apps/telegram-ui';
 import { type FC, useMemo } from 'react';
 
 import { DisplayData } from '@/components/DisplayData/DisplayData.tsx';
-import { Page } from '@/components/Page.tsx';
+import { Page } from '@/components/Page/Page';
 
 export const LaunchParamsPage: FC = () => {
   const lp = useMemo(() => retrieveLaunchParams(), []);

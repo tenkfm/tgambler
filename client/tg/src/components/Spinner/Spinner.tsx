@@ -61,7 +61,6 @@ export const Spinner: FC = () => {
 
   return (
     <>
-        <Header />
         <RoulettePro
             prizes={prizeList}
             prizeIndex={prizeIndex}
