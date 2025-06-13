@@ -73,7 +73,7 @@ export const IndexPage: FC = () => {
         subheader="You can get up to 50 free spins every day!"
       >
         <Button mode="white" size="s" loading={isLoading} onClick={payByTelegramStar}>
-          Try it out
+          Buy a Good Luck
         </Button>
       </Banner>
 
