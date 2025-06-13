@@ -15,9 +15,7 @@ import { Link } from '@/components/Link/Link.tsx';
 import { Page } from '@/components/Page.tsx';
 import { Header } from '@/components/Header/Header';
 
-
 import banner from './banner.jpg';
-import star from './star.svg';
 
 export const IndexPage: FC = () => {
   const initDataState = useSignal(_initDataState);
@@ -78,10 +76,6 @@ export const IndexPage: FC = () => {
           Try it out
         </Button>
       </Banner>
-
-      <div className="badge badge-accent">Accent</div>
-
-
 
       {message && (
         <div style={{ textAlign: 'center', margin: '16px', fontSize: '16px' }}>

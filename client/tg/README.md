@@ -71,10 +71,10 @@ After this, you will see a similar message in your terminal:
 ```bash
 VITE v5.2.12  ready in 237 ms
 
-➜  Local:   https://localhost:5173/reactjs-template
-➜  Network: https://172.18.16.1:5173/reactjs-template
-➜  Network: https://172.19.32.1:5173/reactjs-template
-➜  Network: https://192.168.0.171:5173/reactjs-template
+➜  Local:   https://localhost:5173/gifter
+➜  Network: https://172.18.16.1:5173/gifter
+➜  Network: https://172.19.32.1:5173/gifter
+➜  Network: https://192.168.0.171:5173/gifter
 ➜  press h + enter to show help
 ```
 
@@ -82,7 +82,7 @@ Here, you can see the `Local` link, available locally, and `Network` links
 accessible to all devices in the same network with the current device.
 
 To view the application, you need to open the `Local`
-link (`https://localhost:5173/reactjs-template` in this example) in your
+link (`https://localhost:5173/gifter` in this example) in your
 browser:
 
 ![Application](assets/application.png)
