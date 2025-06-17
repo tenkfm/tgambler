@@ -2,8 +2,6 @@ import random
 import pytest
 
 from functools import lru_cache
-from typing import Any, Type
-from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.controllers.case_controller import CaseController
 from app.services.firebase.firebase_service import FirebaseService
@@ -21,7 +19,7 @@ def get_settings():
 def test_case_rtp_simulation():
     # Setup function to initialize the FirebaseService and CachedFirebaseService.
     settings = get_settings()
-    print(settings)
+
     firebase = FirebaseService(api_key=settings.firebase_api_token)
     cached_firebase_service = CachedFirebaseService(firebase)
     controller = CaseController(firebase_service=cached_firebase_service)

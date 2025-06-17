@@ -4,7 +4,6 @@ from app.models.domain.gift import Gift
 
 case_router = APIRouter(prefix="/api/case", tags=["cases"])
 
-
 @case_router.get("/")
 async def get_active_cases():
     """
