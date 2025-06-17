@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Optional
 from services.firebase.firebase_object import FirebaseObject
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 # Abstract base class for Firebase service
 class FirebaseServiceInterface(ABC):
@@ -14,7 +15,7 @@ class FirebaseServiceInterface(ABC):
         pass
 
     @abstractmethod
-    def fetch_all(self, model_class: Type[FirebaseObject]) -> List[FirebaseObject]:
+    def fetch_all(self, model_class: Type[FirebaseObject], filters: Optional[List[FieldFilter]] = None) -> List[FirebaseObject]:
         pass
 
     @abstractmethod

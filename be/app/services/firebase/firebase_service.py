@@ -6,7 +6,6 @@ from services.firebase.firebase_service_exception import FirebaseServiceExceptio
 from services.firebase.firebase_service_interface import FirebaseServiceInterface
 from google.cloud.firestore_v1.base_query import FieldFilter
 from services.firebase.firebase_object import FirebaseObject
-from models.domain.user import User
 from typing import Optional
 
 # Firebase service implementation
@@ -67,7 +66,7 @@ class FirebaseService(FirebaseServiceInterface):
         except Exception as e:
             raise FirebaseServiceException(f"Failed to delete document: {str(e)}")
         
-    def fetch_all(self, model_class: Type[FirebaseObject], filter: Optional[FieldFilter] = None) -> List[FirebaseObject]:
+    def fetch_all(self, model_class: Type[FirebaseObject], filters: Optional[List[FieldFilter]] = None) -> List[FirebaseObject]:
         """
         Fetch all documents from a specified Firestore collection and convert them into objects of type `model_class`.
 
@@ -79,9 +78,12 @@ class FirebaseService(FirebaseServiceInterface):
             # Get all documents from the specified Firestore collection
             collection_ref = self.db.collection(model_class.collection_name())
 
-            if filter:
-                # Apply the filter if provided
-                documents = collection_ref.where(filter=filter).stream()
+            # Apply the filter if provided
+            if filters:
+                filtered = collection_ref
+                for filter in filters:        
+                    filtered = filtered.where(filter=filter)
+                documents = filtered.stream()
             else:
                 documents = collection_ref.stream()
 

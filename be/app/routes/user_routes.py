@@ -3,7 +3,6 @@ from models.domain.user import User
 from services.container import container
 from models.domain.user import UserInfo
 
-
 user_router = APIRouter(prefix="/api/user", tags=["users"])
 
 @user_router.post("/launch")

@@ -4,7 +4,8 @@ from settings import Settings
 from functools import lru_cache
 from fastapi.middleware.cors import CORSMiddleware
 from models.domain.payment import Payment, InvoiceRequest
-from routes.user_routes import user_router  # Import user routes
+from routes.user_routes import user_router
+from routes.case_routes import case_router
 import requests
 
 ###
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 settings = get_settings()
 app.include_router(user_router)
+app.include_router(case_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins
@@ -41,7 +43,6 @@ app.add_middleware(
 ###
 ### Endpoints
 ###
-
 @app.get("/")
 async def root():
     return {"message": "Hello Bot 🤖"}

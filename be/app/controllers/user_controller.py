@@ -21,7 +21,7 @@ class UserController(BaseController):
              # Check if user exists
             users = self._firebase_service.fetch_all(
                 model_class=UserInfo,
-                filter=FieldFilter("tg_id", "==", user.tg_id)
+                filters=[FieldFilter("tg_id", "==", user.tg_id)]
             )
 
             if users and users.__len__() > 0:
