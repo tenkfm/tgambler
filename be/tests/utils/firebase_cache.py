@@ -8,13 +8,14 @@ class CachedFirebaseService:
         self._by_id_cache = {}
 
     def fetch_all(self, *, model_class: Type[Any], filters: list[FieldFilter] = []):
-        key = (model_class.__name__, tuple((f.field, f.op, f.value) for f in filters))
+        key = (model_class.__name__, tuple(repr(f) for f in filters))
         if key in self._all_cache:
             return self._all_cache[key]
 
         result = self._service.fetch_all(model_class=model_class, filters=filters)
         self._all_cache[key] = result
         return result
+
 
     def fetch_by_id(self, *, model_class: Type[Any], doc_id: str):
         key = (model_class.__name__, doc_id)
