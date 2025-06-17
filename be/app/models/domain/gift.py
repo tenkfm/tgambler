@@ -1,6 +1,4 @@
-from services.firebase.firebase_object import FirebaseObject
-from datetime import datetime
-from typing import Optional
+from app.services.firebase.firebase_object import FirebaseObject
 
 class Gift(FirebaseObject):
     case_id: str

@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from models.domain.user import User
-from services.container import container
-from models.domain.case import Case
-from models.domain.gift import Gift
+from app.services.container import container
+from app.models.domain.gift import Gift
 
 case_router = APIRouter(prefix="/api/case", tags=["cases"])
 

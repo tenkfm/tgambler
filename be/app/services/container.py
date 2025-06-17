@@ -1,10 +1,16 @@
-import os
 from dotenv import load_dotenv
-from fastapi import Depends
-from models.domain.user import User
-from services.firebase.firebase_service import FirebaseService
-from controllers.user_controller import UserController
-from controllers.case_controller import CaseController
+from functools import lru_cache
+from app.settings import Settings
+from app.services.firebase.firebase_service import FirebaseService
+from app.controllers.user_controller import UserController
+from app.controllers.case_controller import CaseController
+
+###
+### Load global params
+###
+@lru_cache()
+def get_settings():
+    return Settings()
 
 class Container:
     # Services
@@ -15,8 +21,8 @@ class Container:
     case_controller: CaseController
 
     def populate(self):
-        load_dotenv()
-        firebase_service_account_key = os.getenv("FIREBASE_API_TOKEN")
+        settings = get_settings()
+        firebase_service_account_key = settings.firebase_api_token
         firebase_service = FirebaseService(api_key=firebase_service_account_key)
         self.firebase_service = firebase_service
 

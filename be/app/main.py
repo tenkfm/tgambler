@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from settings import Settings
+from app.settings import Settings
 from functools import lru_cache
 from fastapi.middleware.cors import CORSMiddleware
-from models.domain.payment import Payment, InvoiceRequest
-from routes.user_routes import user_router
-from routes.case_routes import case_router
+from app.models.domain.payment import Payment, InvoiceRequest
+from app.routes.user_routes import user_router
+from app.routes.case_routes import case_router
 import requests
 
 ###

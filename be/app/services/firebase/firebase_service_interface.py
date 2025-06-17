@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Optional
-from services.firebase.firebase_object import FirebaseObject
 from google.cloud.firestore_v1.base_query import FieldFilter
+from app.services.firebase.firebase_object import FirebaseObject
 
 # Abstract base class for Firebase service
 class FirebaseServiceInterface(ABC):

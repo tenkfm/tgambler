@@ -1,6 +1,6 @@
-from services.firebase.firebase_object import FirebaseObject
-from datetime import datetime
 from typing import Optional
+from datetime import datetime
+from app.services.firebase.firebase_object import FirebaseObject
 
 class UserInfo(FirebaseObject):
     tg_id: str

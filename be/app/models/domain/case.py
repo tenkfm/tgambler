@@ -1,7 +1,6 @@
-from fastapi import Depends
-
-from services.firebase.firebase_object import FirebaseObject
 from pydantic import BaseModel
+
+from app.services.firebase.firebase_object import FirebaseObject
 
 class Case(FirebaseObject):
     name: str

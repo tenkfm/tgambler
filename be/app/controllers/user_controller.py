@@ -1,11 +1,9 @@
 from fastapi import HTTPException, Depends
 from datetime import datetime
-
-from controllers.base_controller import BaseController
-from services.firebase.firebase_service import FirebaseService
 from google.cloud.firestore_v1.base_query import FieldFilter
-
-from models.domain.user import UserInfo, LaunchInfo
+from app.models.domain.user import UserInfo, LaunchInfo
+from app.controllers.base_controller import BaseController
+from app.services.firebase.firebase_service import FirebaseService
 
 class UserController(BaseController):
     _firebase_service: FirebaseService
