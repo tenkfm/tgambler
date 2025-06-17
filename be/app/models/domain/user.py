@@ -16,6 +16,7 @@ class UserInfo(FirebaseObject):
     auth_date: datetime
     chat_instance: str
     signature: str
+    referral_id: Optional[str] = None  # Optional field for referral ID (The user who referred this user)
 
     @staticmethod
     def collection_name():
@@ -28,12 +29,3 @@ class LaunchInfo(FirebaseObject):
     @staticmethod
     def collection_name():
         return "launch_info"  # Firestore collection for LaunchInfo instances
-
-# Define a Pydantic model for user input
-class User(FirebaseObject):
-    email: str
-    display_name: str
-
-    @staticmethod
-    def collection_name():
-        return "users"  # Firestore collection for User instances

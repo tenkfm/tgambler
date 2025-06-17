@@ -33,6 +33,7 @@ class FirebaseService(FirebaseServiceInterface):
         
         :param obj: The dictionary object to be added to Firestore.
         :param collection_name: The name of the Firestore collection where the object should be added.
+        :return: The document ID of the added object.
         """
 
         try:

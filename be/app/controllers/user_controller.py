@@ -1,9 +1,11 @@
 from fastapi import HTTPException, Depends
 from datetime import datetime
+import jwt
 from google.cloud.firestore_v1.base_query import FieldFilter
 from app.models.domain.user import UserInfo, LaunchInfo
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
+from app.settings import Settings
 
 class UserController(BaseController):
     _firebase_service: FirebaseService
@@ -14,7 +16,14 @@ class UserController(BaseController):
     def on_launch(self, user: UserInfo):
         """
         On application launch we want to create/update user id and info in the database.
+        Generate jwt token for the user and return it.
         """
+
+        #TODO: Add hash validation for user data
+        # key1=value1\nkey2=value2\n...
+        # secret_key = HMAC-SHA256(bot_token, "WebAppData")
+        # hash == HMAC_SHA256(secret_key, data_string)
+
         try:
              # Check if user exists
             users = self._firebase_service.fetch_all(
@@ -25,18 +34,54 @@ class UserController(BaseController):
             if users and users.__len__() > 0:
                   # Get the first user if exists
                 self.__update_user_on_launch(user, users[0].id)
-                return {"status": "ok"}
+                # Generate a JWT token
+                token = self.__generate_jwt(user_id=users[0].id)
+                return {"access_token": token}
             else:
                 # User not found, create a new user
-                self.__create_user_on_launch(user)
-                return {"status": "ok"}
+                new_user_id = self.__create_user_on_launch(user)
+                # Generate a JWT token
+                token = self.__generate_jwt(user_id=new_user_id)
+                return {"access_token": token}
         except Exception as e:
             print(e)
             raise HTTPException(status_code=500, detail=str(e))
+        
+    def validate_token(self, token: str) -> str:
+        decoded = jwt.decode(token, Settings().auth_secret_key, algorithms=["HS256"])
+        user_id = decoded.get("user_id", None)
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+
+    def set_referral_user(self, user_id: str, ref_id: str):
+        """
+        Set the referral user based on the provided referral ID.
+        """
+
+        #TODO: move to redis cache
+
+        user = self._firebase_service.fetch_by_id(
+            model_class=UserInfo,
+            doc_id=user_id
+        )
+        
+        # Save Referral object
+        user.referral_id = ref_id
+        self._firebase_service.update(
+            id=user_id,
+            obj=user
+        )
+        return {"status": "ok"}
+
+    def __generate_jwt(self, user_id: str):
+        return jwt.encode({"user_id": user_id}, Settings().auth_secret_key, algorithm="HS256")
+
     
-    def __create_user_on_launch(self, user: UserInfo):
-        self._firebase_service.add(user)
-        self.__save_launch_info(user)
+    def __create_user_on_launch(self, user: UserInfo) -> str:
+        user_doc_id = self._firebase_service.add(user)
+        self.__save_launch_info(user, user_doc_id)
+        return user_doc_id
 
     def __update_user_on_launch(self, user: UserInfo, user_id: str):
         self._firebase_service.update(
