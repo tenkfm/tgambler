@@ -1,16 +1,34 @@
-.ton-connect-page__placeholder {
-  position: absolute;
+.spinner-page {
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
+  /* убираем фон, он пойдёт в ::before */
+  background: none;
+  overflow: hidden;
 }
 
-.ton-connect-page__button {
-  margin: 16px auto 0;
+.spinner-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('./background.jpg') no-repeat center center fixed;
+  background-size: cover;
+
+  /* собственно размытие фона */
+  /* filter: blur(2px); */
+
+  z-index: 1;
 }
 
-.ton-connect-page__button-connected {
-  margin: 16px 24px 16px auto;
+.content {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
 }

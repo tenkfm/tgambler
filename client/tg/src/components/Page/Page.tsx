@@ -1,27 +1,38 @@
 import { useNavigate } from 'react-router-dom';
-import { hideBackButton, onBackButtonClick, showBackButton } from '@telegram-apps/sdk-react';
-import { type PropsWithChildren, useEffect, type ReactNode } from 'react';
+import {
+  hideBackButton,
+  onBackButtonClick,
+  showBackButton,
+} from '@telegram-apps/sdk-react';
+import {
+  type PropsWithChildren,
+  useEffect,
+  type ReactNode,
+  type CSSProperties,
+} from 'react';
 import { bem } from '@/css/bem.ts';
 
 import './Page.css';
-const [, e] = bem('page');
+
+// Деструктурируем и функцию блока (b), и функцию элемента (e)
+const [b, e] = bem('page');
 
 interface PageProps {
-  /**
-   * True if the page should have padding.
-   */
   padding?: boolean;
-  /**
-   * True if it is allowed to go back from this page.
-   */
   back?: boolean;
-  /**
-   * Optional header content to render above the page body.
-   */
   header?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
-export function Page({ header, back = true, padding = true, children }: PropsWithChildren<PageProps>) {
+export function Page({
+  header,
+  back = true,
+  padding = true,
+  children,
+  className = '',
+  style,
+}: PropsWithChildren<PageProps>) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,10 +43,13 @@ export function Page({ header, back = true, padding = true, children }: PropsWit
       });
     }
     hideBackButton();
-  }, [back]);
+  }, [back, navigate]);
+
+  // Используем b() для базового класса блока
+  const rootClass = [ b(), className ].filter(Boolean).join(' ');
 
   return (
-    <div>
+    <div className={rootClass} style={style}>
       {header}
       {padding ? <div className={e('body')}>{children}</div> : children}
     </div>

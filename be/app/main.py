@@ -3,22 +3,33 @@ from fastapi import FastAPI, Request
 from settings import Settings
 from functools import lru_cache
 from fastapi.middleware.cors import CORSMiddleware
-from models import Payment, InvoiceRequest
+from models.domain.payment import Payment, InvoiceRequest
+from routes.user_routes import user_router  # Import user routes
 import requests
 
+###
+### Load global params
+###
 @lru_cache()
 def get_settings():
     return Settings()
 
+###
+### Initialize any resources here if needed
+###
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize any resources here if needed
     print("Starting up the application...")
     yield
 
+###
+### FastAPI application setup
+### Middleware setup
+### Routes setup
+###
 app = FastAPI(lifespan=lifespan)
 settings = get_settings()
-
+app.include_router(user_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins
@@ -27,9 +38,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+###
+### Endpoints
+###
+
 @app.get("/")
 async def root():
-    return {"message": "Hello Bot 🤖 "}
+    return {"message": "Hello Bot 🤖"}
 
 # Neet to set a webhook - https://api.telegram.org/botXXXXX/setWebhook?url=https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/webhooks/telegram
 @app.post("/webhooks/telegram")

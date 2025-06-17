@@ -11,7 +11,6 @@ import { bem } from '@/css/bem.ts';
 
 import tonSvg from './ton.svg';
 import './Header.css';
-
 const [, e] = bem('header');
 
 export const Header: FC = () => {

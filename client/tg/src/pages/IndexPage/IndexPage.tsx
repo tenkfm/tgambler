@@ -14,8 +14,11 @@ import axios from 'axios';
 import { Link } from '@/components/Link/Link.tsx';
 import { Page } from '@/components/Page/Page';
 import { Header } from '@/components/Header/Header';
+import { ImageButton } from '@/components/ImageButton';
 
 import banner from './banner.jpg';
+import rullet from './buttons/rullet.jpg';
+import machine from './buttons/machine.jpg';
 
 export const IndexPage: FC = () => {
   const initDataState = useSignal(_initDataState);
@@ -82,11 +85,21 @@ export const IndexPage: FC = () => {
           </div>
         )}
 
+
         <Link to="/spinner">
-            <Button mode="filled" size="m" style={{ margin: '16px auto', display: 'block' }}>
-            Spin
-          </Button>
+          <ImageButton
+            image={rullet}
+            style={{ margin: '8px  0' }}
+          ></ImageButton>
         </Link>
+
+        <Link to="/launch-params">
+          <ImageButton
+            image={machine}
+            style={{ margin: '8px  0' }}
+          ></ImageButton>
+        </Link>
+
       </div>
     </Page>
   );

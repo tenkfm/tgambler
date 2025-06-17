@@ -3,7 +3,6 @@ import { useState } from 'react';
 
 import RoulettePro from 'react-roulette-pro';
 import 'react-roulette-pro/dist/index.css';
-import { Header } from '@/components/Header/Header';
 import { Button } from '@telegram-apps/telegram-ui';
 
 type Prize = { image: string };
@@ -34,6 +33,8 @@ const reproductionArray = (array: Prize[], length: number): Prize[] =>
 const reproducedPrizeList = [
   ...prizes,
   ...reproductionArray(prizes, prizes.length * 3),
+  ...reproductionArray(prizes, prizes.length * 3),
+  ...reproductionArray(prizes, prizes.length * 3),
   ...prizes,
   ...reproductionArray(prizes, prizes.length),
 ];
@@ -59,17 +60,44 @@ export const Spinner: FC = () => {
     console.log('🥳 Prize defined! 🥳');
   };
 
+  // вот функция рендеринга каждого «слота» колеса
+  const prizeItemRenderFunction = (item: Prize) => (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 8,
+      }}
+    >
+      <img
+        src={item.image}
+        alt="prize"
+        style={{
+          maxWidth: '90%',
+          maxHeight: '90%',
+          objectFit: 'contain',
+        }}
+      />
+    </div>
+  );
+
   return (
     <>
         <RoulettePro
-            prizes={prizeList}
-            prizeIndex={prizeIndex}
-            start={start}
-            onPrizeDefined={handlePrizeDefined}
-            spinningTime={10}
+          prizes={prizeList}
+          prizeIndex={prizeIndex}
+          start={start}
+          onPrizeDefined={handlePrizeDefined}
+          spinningTime={10}
+          // очень быстрый старт, но без overshoot:
+          transitionFunction="cubic-bezier(0,.89,.44,.98)"
+          prizeItemRenderFunction={prizeItemRenderFunction}
         />
 
-        <Button mode="outline" size="m" style={{ margin: '16px auto', display: 'block' }} onClick={handleStart}>
+        <Button mode="white" size="m" style={{ margin: '16px auto', display: 'block' }} onClick={handleStart}>
             🍀 Spin 🍀
         </Button>
     </>
