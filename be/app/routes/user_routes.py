@@ -12,7 +12,6 @@ async def user_launch_app(user: UserInfo):
     try:
         return container.user_ctonroller.on_launch(user)  # Call the controller method to handle user launch
     except Exception as e:
-        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -30,7 +29,10 @@ async def set_referral_user(ref_id: str, x_user_id: str = Header(...)):
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    return container.user_ctonroller.set_referral_user(user_id=user_id, ref_id=ref_id)
+    try:
+        return container.user_ctonroller.set_referral_user(user_id=user_id, ref_id=ref_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Save referral error")
     
 
 @user_router.get("/")
