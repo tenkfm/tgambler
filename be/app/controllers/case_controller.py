@@ -7,14 +7,21 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
+from app.controllers.fin_controller import FinController
 from app.models.domain.case import *
 from app.models.domain.gift import *
 
 class CaseController(BaseController):
     _firebase_service: FirebaseService
+    _fin_controller: FinController
 
-    def __init__(self, firebase_service: FirebaseService = Depends(FirebaseService)):
+    def __init__(
+            self,
+            firebase_service: FirebaseService = Depends(FirebaseService),
+            fin_controller: FinController = Depends(FinController)
+        ):
         self._firebase_service = firebase_service
+        self._fin_controller = fin_controller
 
     def get_active_cases(self) -> list[Case]:
         """
@@ -96,7 +103,12 @@ class CaseController(BaseController):
         if not case_id:
             raise HTTPException(status_code=400, detail="Case ID is required")
         
-        # TODO: Check User balance
+        self._fin_controller.process_transaction(
+            from_wallet_id="user_wallet_id",  # Replace with actual user wallet ID
+            to_wallet_id="case_wallet_id",  # Replace with actual case wallet ID
+            amount=100,  # Replace with the actual cost of opening the case
+            description=f"Opening case {case_id} at {datetime.now()}"
+        )
 
         gifts = self.get_case_gifts(case_id)
         gifts.sort(key=lambda gift: gift.prob, reverse=True)

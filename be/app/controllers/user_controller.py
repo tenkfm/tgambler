@@ -3,6 +3,7 @@ from datetime import datetime
 import jwt
 from google.cloud.firestore_v1.base_query import FieldFilter
 from app.models.domain.user import UserInfo, LaunchInfo
+from app.models.domain.wallet import Wallet
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
 from app.settings import Settings
@@ -39,7 +40,7 @@ class UserController(BaseController):
                 return {"access_token": token}
             else:
                 # User not found, create a new user
-                new_user_id = self.__create_user_on_launch(user)
+                new_user_id = self.create_user(user)
                 # Generate a JWT token
                 token = self.__generate_jwt(user_id=new_user_id)
                 return {"access_token": token}
@@ -73,15 +74,28 @@ class UserController(BaseController):
             obj=user
         )
         return {"status": "ok"}
+    
+    def create_user(self, user: UserInfo) -> str:
+        # Create user
+        user = self._firebase_service.add(user)
+        user_doc_id = user.id
+        self.__save_launch_info(user, user_doc_id)
+
+        # Create user wallet
+        wallet = Wallet(
+            user_id=user_doc_id,
+            balance=0,
+            currency="TON",
+            last_updated=datetime.now()
+        )
+        self._firebase_service.add(wallet)
+        return user_doc_id
+    
+
+    # Private methods
 
     def __generate_jwt(self, user_id: str):
         return jwt.encode({"user_id": user_id}, Settings().auth_secret_key, algorithm="HS256")
-
-    
-    def __create_user_on_launch(self, user: UserInfo) -> str:
-        user_doc_id = self._firebase_service.add(user)
-        self.__save_launch_info(user, user_doc_id)
-        return user_doc_id
 
     def __update_user_on_launch(self, user: UserInfo, user_id: str):
         self._firebase_service.update(
@@ -98,4 +112,3 @@ class UserController(BaseController):
             user_id,
             launchInfo
         )
-        print(f"Launch info saved for user {user_id} - {launchInfo}")

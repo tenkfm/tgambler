@@ -4,6 +4,7 @@ from app.settings import Settings
 from app.services.firebase.firebase_service import FirebaseService
 from app.controllers.user_controller import UserController
 from app.controllers.case_controller import CaseController
+from app.controllers.fin_controller import FinController
 
 ###
 ### Load global params
@@ -19,6 +20,7 @@ class Container:
     # Controllers
     user_ctonroller: UserController
     case_controller: CaseController
+    fin_controller: FinController
 
     def populate(self):
         settings = get_settings()
@@ -27,7 +29,8 @@ class Container:
         self.firebase_service = firebase_service
 
         self.user_ctonroller = UserController(firebase_service=self.firebase_service)
-        self.case_controller = CaseController(firebase_service=self.firebase_service)
+        self.fin_controller = FinController(firebase_service=self.firebase_service)
+        self.case_controller = CaseController(firebase_service=self.firebase_service, fin_controller=self.fin_controller)
 
 container = Container()
 container.populate()

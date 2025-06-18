@@ -16,7 +16,7 @@ class UserInfo(FirebaseObject):
     auth_date: datetime
     chat_instance: str
     signature: str
-    referral_id: Optional[str] = None  # Optional field for referral ID (The user who referred this user)
+    referral_id: str = ""  # Optional field for referral ID (The user who referred this user)
 
     @staticmethod
     def collection_name():
