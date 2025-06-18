@@ -93,7 +93,7 @@ class CaseController(BaseController):
             raise HTTPException(status_code=500, detail=str(e))
 
 
-    def open_case(self, case_id: str) -> Gift:
+    def open_case(self, user_id: str, case_id: str) -> Gift:
         """
         Open a case and return a random gift from it.
         
@@ -103,17 +103,21 @@ class CaseController(BaseController):
         if not case_id:
             raise HTTPException(status_code=400, detail="Case ID is required")
         
-        self._fin_controller.process_transaction(
-            from_wallet_id="user_wallet_id",  # Replace with actual user wallet ID
-            to_wallet_id="case_wallet_id",  # Replace with actual case wallet ID
-            amount=100,  # Replace with the actual cost of opening the case
-            description=f"Opening case {case_id} at {datetime.now()}"
+        case = self.get_case_by_id(case_id)
+        if not case.is_active:
+            raise HTTPException(status_code=400, detail="Case is not active")
+        
+        # Transfer funds from user to app
+        self._fin_controller.transfer_funds_from_user_to_app(
+            user_id=user_id,
+            amount=case.cost,
+            description=f"Opening case {case_id}, cost: {case.cost} TON"
         )
 
         gifts = self.get_case_gifts(case_id)
         gifts.sort(key=lambda gift: gift.prob, reverse=True)
 
-        # Предварительно строим массив кумулятивных вероятностей
+        # Calculate cumulative probabilities
         cum_probs = []
         running = 0
         for gift in gifts:
@@ -124,7 +128,19 @@ class CaseController(BaseController):
         print(r)
         idx = bisect(cum_probs, r)
         prize = gifts[idx]
-        return prize
+
+        # Save CaseOpening record
+        case_opening = CaseOpening(
+            user_id=user_id,
+            case_id=case_id,
+            gift_id=prize.id,
+            gift_type=prize.type,
+            gift_volume=prize.volume,
+            status=CaseOpeningStatus.NEW,
+            open_at=datetime.now()
+        )
+        self._firebase_service.add(case_opening)
+        return case_opening
     
 
     def get_case_info(self, case: Case) -> CaseInfo:
@@ -166,3 +182,42 @@ class CaseController(BaseController):
         case_info.rtp = round(rtp, 3)
 
         return case_info
+    
+    def redep_openning(self, openning_id: str, user_id: str):
+        """
+        Redeem an existing case opening by topping up the user's balance with the opened gift volume.
+        
+        :param openning_id: The ID of the case opening to redeem.
+        :param user_id: The ID of the user redeeming the opening.
+        :return: A message indicating the success of the operation.
+        """
+        if not openning_id:
+            raise HTTPException(status_code=400, detail="Openning ID is required")
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="User ID is required")
+        
+        print(openning_id)
+        case_opening = self._firebase_service.fetch_by_id(model_class=CaseOpening, doc_id=openning_id)
+        
+        if not case_opening:
+            raise HTTPException(status_code=404, detail="Case opening not found")
+        
+        if case_opening.status != CaseOpeningStatus.NEW:
+            raise HTTPException(status_code=400, detail="Only new case openings can be redeped")
+        
+        if case_opening.user_id != user_id:
+            raise HTTPException(status_code=403, detail="You can only redep your own case openings")
+        
+        # Transfer gift volume to user
+        self._fin_controller.transfer_funds_from_app_to_user(
+            user_id=user_id,
+            amount=case_opening.gift_volume,
+            description=f"Redeeming case opening {openning_id}, gift volume: {case_opening.gift_volume} TON"
+        )
+        
+        # Update case opening status
+        case_opening.status = CaseOpeningStatus.REDEPED
+        self._firebase_service.update(id=case_opening.id, obj=case_opening)
+        
+        return {"status": "ok"}

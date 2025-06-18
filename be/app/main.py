@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.models.domain.payment import Payment, InvoiceRequest
 from app.routes.user_routes import user_router
 from app.routes.case_routes import case_router
+from app.routes.fin_routes import fin_router
 import requests
 
 ###
@@ -32,6 +33,7 @@ app = FastAPI(lifespan=lifespan)
 settings = get_settings()
 app.include_router(user_router)
 app.include_router(case_router)
+app.include_router(fin_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins
@@ -47,7 +49,6 @@ app.add_middleware(
 async def root():
     return {"message": "Hello Bot 🤖"}
 
-# Neet to set a webhook - https://api.telegram.org/botXXXXX/setWebhook?url=https://fuzzy-waddle-rrqjpx67xrcgjw-8000.app.github.dev/webhooks/telegram
 @app.post("/webhooks/telegram")
 async def telegram_webhook(request: Request):
     update = await request.json()

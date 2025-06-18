@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from app.services.container import container
 from app.models.domain.gift import Gift
 
 case_router = APIRouter(prefix="/api/case", tags=["cases"])
+
 
 @case_router.get("/")
 async def get_active_cases():
@@ -74,7 +75,7 @@ async def add_gift_to_case(case_id: str, gift: Gift):
     
 
 @case_router.post("/{case_id}/open")
-async def open_case(case_id: str):
+async def open_case(case_id: str, x_token: str = Header(...)):
     """
     🚀 Open a case by its ID.
     :param case_id: The ID of the case to open.
@@ -84,7 +85,34 @@ async def open_case(case_id: str):
         raise HTTPException(status_code=400, detail="Case ID is required")
     
     try:
-        return container.case_controller.open_case(case_id)
+        user_id = container.user_ctonroller.validate_token(x_token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    try:
+        return container.case_controller.open_case(user_id, case_id)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@case_router.post("/{openning_id}/redep")
+async def redep_openning(openning_id: str, x_token: str = Header(...)):
+    """
+    🔄 Redep an existing case opening - Topup balance with openning gift volume
+    :param openning_id: The ID of the case opening to reuse.
+    :return: A random gift from the reused case opening.
+    """
+    if not openning_id:
+        raise HTTPException(status_code=400, detail="Openning ID is required")
+    
+    try:
+        user_id = container.user_ctonroller.validate_token(x_token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Redep an existing case opening
+    try:
+        return container.case_controller.redep_openning(openning_id, user_id)
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=str(e))

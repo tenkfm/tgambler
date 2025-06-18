@@ -117,10 +117,9 @@ class FirebaseService(FirebaseServiceInterface):
             return objects
 
         except Exception as e:
-            print(f"Error fetching documents from {model_class.collection_name()}: {str(e)}")
-            raise Exception(f"Error fetching documents from {model_class.collection_name()}: {str(e)}")
+            raise FirebaseServiceException(f"Error fetching documents from {model_class.collection_name()}: {str(e)}")
 
-    def fetch_by_id(self, model_class: Type[FirebaseObject], doc_id: str) -> FirebaseObject:
+    def fetch_by_id(self, model_class: Type[FirebaseObject], doc_id: str) -> Optional[FirebaseObject]:
         """
         Fetch a single document from the specified Firestore collection by its ID
         and convert it into an object of the specified model class.
@@ -135,6 +134,9 @@ class FirebaseService(FirebaseServiceInterface):
             doc_ref = self.db.collection(model_class.collection_name()).document(doc_id)
             doc = doc_ref.get()  # Get the document
             
+            if not doc.exists:               # Document does not exist
+                return None
+            
             if not doc.exists:
                 raise Exception(f"Document with ID {doc_id} not found.")
 
@@ -145,7 +147,7 @@ class FirebaseService(FirebaseServiceInterface):
             # Create the model instance from the data
             return model_class(**data)  # Convert to the model (e.g., User)
         except Exception as e:
-            raise Exception(f"Error fetching document from {model_class.collection_name()}: {str(e)}")
+            raise FirebaseServiceException(f"Error fetching document from {model_class.collection_name()}: {e}")
         
 
     def update(self, id: str, obj: FirebaseObject) -> FirebaseObject:
@@ -171,7 +173,7 @@ class FirebaseService(FirebaseServiceInterface):
             return data  # Return the document ID of the updated object
 
         except Exception as e:
-            raise Exception(f"Error updating document with ID {id}: {str(e)}")
+            raise FirebaseServiceException(f"Error updating document with ID {id}: {str(e)}")
         
     def add_to_subcollection(
         self,

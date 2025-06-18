@@ -1,4 +1,9 @@
+from enum import Enum
 from app.services.firebase.firebase_object import FirebaseObject
+
+class GiftType(str, Enum):
+    GIFT = "GIFT"
+    BALANCE = "BALANCE"
 
 class Gift(FirebaseObject):
     case_id: str
@@ -8,6 +13,7 @@ class Gift(FirebaseObject):
     volume: int
     prob: int
     is_active: bool
+    type: GiftType
 
     def probf(self) -> float:
         """

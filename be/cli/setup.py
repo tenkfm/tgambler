@@ -1,4 +1,5 @@
 import sys
+import requests
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
@@ -12,20 +13,23 @@ def application_setup():
     This function sets up the application by initializing the Firebase service.
     It can be extended to include other setup tasks as needed.
     """
-    
-    if check_app_is_set_up():
-        print("Don't need to set up application, it is already set up.")
-        return
 
     try:
+        if check_app_is_set_up():
+            print("🛑 Don't need to set up application, it is already set up.")
+            return
+    
         # Create App Wallet
         create_app_wallet()
-        print("Application wallet created successfully.")
+
+        # Setup Telegram API webhook
+        setup_telegram_api_webhook()
+        print("💵 Application wallet created successfully.")
     except Exception as e:
-        print(f"Error creating application wallet: {e}")
+        print(f"❌ Application setup Error: {e}")
         return    
 
-    print("Application setup completed successfully.")
+    print("✅ Application setup completed successfully.")
 
 def check_app_is_set_up():
     """
@@ -39,8 +43,7 @@ def check_app_is_set_up():
         print("Application is set up.")
         return True
     except Exception as e:
-        print(f"Error checking application setup: {e}")
-        return True
+        raise Exception(f"Error checking application setup: {e}") from e
 
 def create_app_wallet():
     wallet = Wallet(
@@ -50,6 +53,18 @@ def create_app_wallet():
         currency="TON",
     )
     container.firebase_service.add_with_doc_id(doc_id=Settings().app_wallet_id, obj=wallet)
+
+def setup_telegram_api_webhook():
+    bot_token = Settings().telegram_bot_token
+    webhook_url = f"{Settings().app_domain}/webhooks/telegram"
+
+    url = f"https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}"
+    resp = requests.get(url)
+
+    if resp.status_code != 200:
+        raise Exception(f"Failed to set webhook: {resp.text}")
+    else:
+        print("✅ Webhook set successfully.")
 
 if __name__ == "__main__":
     application_setup()

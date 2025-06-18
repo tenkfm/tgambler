@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     firebase_api_token: str
     auth_secret_key: str
     app_wallet_id: str
+    app_domain: str
     
     model_config = SettingsConfigDict(
         env_file=".env",

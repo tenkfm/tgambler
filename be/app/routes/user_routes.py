@@ -16,7 +16,7 @@ async def user_launch_app(user: UserInfo):
 
 
 @user_router.post("/referral")
-async def set_referral_user(ref_id: str, x_user_id: str = Header(...)):
+async def set_referral_user(ref_id: str, x_token: str = Header(...)):
     """
     Set the referral user based on the provided referral ID.
     This function can be used as a dependency in routes to set the referral user.
@@ -25,7 +25,7 @@ async def set_referral_user(ref_id: str, x_user_id: str = Header(...)):
         raise HTTPException(status_code=400, detail="ref_id is required")
     
     try:
-        user_id = container.user_ctonroller.validate_token(x_user_id)
+        user_id = container.user_ctonroller.validate_token(x_token)
     except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token")
     

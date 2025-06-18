@@ -66,6 +66,9 @@ class UserController(BaseController):
             model_class=UserInfo,
             doc_id=user_id
         )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
         
         # Save Referral object
         user.referral_id = ref_id
@@ -81,13 +84,13 @@ class UserController(BaseController):
         user_doc_id = user.id
         self.__save_launch_info(user, user_doc_id)
 
-        self._create_wallet(user_doc_id)
+        self.__create_wallet(user_doc_id)
         return user_doc_id
     
 
     # Private methods
 
-    def _create_wallet(self, user_id: str):
+    def __create_wallet(self, user_id: str):
         """
         Create a wallet for the user.
         """
