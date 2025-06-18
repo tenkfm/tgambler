@@ -42,7 +42,26 @@ class FirebaseService(FirebaseServiceInterface):
             # Add the object to Firestore
             _, doc_ref = collection_ref.add(obj.model_dump(exclude_unset=True))
             obj.id = doc_ref.id
-            return obj  # Return the document ID
+            return obj  # Return the document with ID
+        except Exception as e:
+            # Raise a custom exception if there's an error
+            raise FirebaseServiceException(f"Failed to add document to {obj.collection_name()}: {str(e)}")
+        
+    def add_with_doc_id(self, doc_id: str, obj: FirebaseObject) -> str:
+        """
+        Add an object to the specified Firestore collection with specific document ID.
+        
+        :param obj: The dictionary object to be added to Firestore.
+        :param collection_name: The name of the Firestore collection where the object should be added.
+        :return: The document ID of the added object.
+        """
+
+        try:
+            # Access the specified collection
+            collection_ref = self.db.collection(obj.collection_name()).document(doc_id)
+            # Add the object with specific ID to Firestore
+            collection_ref.set(obj.model_dump(exclude_unset=True))
+            return obj  # Return the document
         except Exception as e:
             # Raise a custom exception if there's an error
             raise FirebaseServiceException(f"Failed to add document to {obj.collection_name()}: {str(e)}")

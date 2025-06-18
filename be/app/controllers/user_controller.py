@@ -81,18 +81,24 @@ class UserController(BaseController):
         user_doc_id = user.id
         self.__save_launch_info(user, user_doc_id)
 
-        # Create user wallet
-        wallet = Wallet(
-            user_id=user_doc_id,
-            balance=0,
-            currency="TON",
-            last_updated=datetime.now()
-        )
-        self._firebase_service.add(wallet)
+        self._create_wallet(user_doc_id)
         return user_doc_id
     
 
     # Private methods
+
+    def _create_wallet(self, user_id: str):
+        """
+        Create a wallet for the user.
+        """
+        wallet = Wallet(
+            user_id=user_id,
+            balance=0,
+            currency="TON",
+            last_updated=datetime.now()
+        )
+        return self._firebase_service.add(wallet)
+
 
     def __generate_jwt(self, user_id: str):
         return jwt.encode({"user_id": user_id}, Settings().auth_secret_key, algorithm="HS256")
