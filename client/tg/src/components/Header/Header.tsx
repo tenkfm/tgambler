@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Avatar, Button, Headline, Caption } from '@telegram-apps/telegram-ui';
 import { Link } from '@/components/Link/Link.tsx';
+import { TonConnectButton } from '@tonconnect/ui-react';
 
 import {
   initDataRaw as _initDataRaw,
@@ -26,9 +27,11 @@ export const Header: FC = () => {
         </div>
 
         <div className={e('right')}>
-            <Link to="/ton-connect">
+          <TonConnectButton />
+            
+            {/* <Link to="/ton-connect">
                 <Button size="s" mode="outline">Connect Wallet</Button>
-            </Link>
+            </Link> */}
             
             <Caption weight="1">0.00</Caption>
 

@@ -197,7 +197,6 @@ class CaseController(BaseController):
         if not user_id:
             raise HTTPException(status_code=400, detail="User ID is required")
         
-        print(openning_id)
         case_opening = self._firebase_service.fetch_by_id(model_class=CaseOpening, doc_id=openning_id)
         
         if not case_opening:
