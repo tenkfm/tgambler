@@ -38,8 +38,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Commands:\n/start — Launch\n/help — Help")
 
-
-
 # Bot launch
 if __name__ == "__main__":
     settings = Settings()

@@ -1,11 +1,16 @@
+from enum import Enum
 from typing import Optional
 from datetime import datetime
 from app.services.firebase.firebase_object import FirebaseObject
 
+class Currency(str, Enum):
+    TON = "TON"
+    COIN = "COIN"
+
 class Wallet(FirebaseObject):
     user_id: str
     balance: int = 0
-    currency: str = "TON"
+    currency: Currency
     last_updated: Optional[datetime] = None  # Timestamp of the last update
 
     @staticmethod

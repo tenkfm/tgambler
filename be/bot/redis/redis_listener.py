@@ -7,7 +7,6 @@ REDIS_CONSUMER = "bot-1"
 
 redis_client = redis.Redis(decode_responses=True)
 
-
 async def setup_redis():
     try:
         await redis_client.xgroup_create(

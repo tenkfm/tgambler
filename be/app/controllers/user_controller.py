@@ -1,9 +1,10 @@
+from jose import jwt
+from jose.exceptions import JWTError, ExpiredSignatureError
 from fastapi import HTTPException, Depends
 from datetime import datetime
-import jwt
 from google.cloud.firestore_v1.base_query import FieldFilter
 from app.models.domain.user import UserInfo, LaunchInfo
-from app.models.domain.wallet import Wallet
+from app.models.domain.wallet import Wallet, Currency
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
 from app.settings import Settings
@@ -49,10 +50,19 @@ class UserController(BaseController):
             raise HTTPException(status_code=500, detail=str(e))
         
     def validate_token(self, token: str) -> str:
-        decoded = jwt.decode(token, Settings().auth_secret_key, algorithms=["HS256"])
-        user_id = decoded.get("user_id", None)
-        if not user_id:
+        try:
+            payload = jwt.decode(
+                token,
+                Settings().auth_secret_key,
+                algorithms=["HS256"]
+            )
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
         return user_id
 
     def set_referral_user(self, user_id: str, ref_id: str):
@@ -84,24 +94,33 @@ class UserController(BaseController):
         user_doc_id = user.id
         self.__save_launch_info(user, user_doc_id)
 
-        self.__create_wallet(user_doc_id)
+        self.__create_wallets(user_doc_id)
         return user_doc_id
     
 
     # Private methods
 
-    def __create_wallet(self, user_id: str):
+    def __create_wallets(self, user_id: str):
         """
-        Create a wallet for the user.
+        Create user's TON wallet.
         """
-        wallet = Wallet(
+        ton_wallet = Wallet(
             user_id=user_id,
             balance=0,
-            currency="TON",
+            currency=Currency.TON,
             last_updated=datetime.now()
         )
-        return self._firebase_service.add(wallet)
-
+        self._firebase_service.add(ton_wallet)
+        """
+        Create user's COIN wallet.
+        """
+        coin_wallet = Wallet(
+            user_id=user_id,
+            balance=0,
+            currency=Currency.COIN,
+            last_updated=datetime.now()
+        )
+        self._firebase_service.add(coin_wallet)
 
     def __generate_jwt(self, user_id: str):
         return jwt.encode({"user_id": user_id}, Settings().auth_secret_key, algorithm="HS256")
