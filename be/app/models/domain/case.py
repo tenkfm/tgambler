@@ -7,7 +7,7 @@ from app.models.domain.gift import GiftType
 class CaseOpeningStatus(str, Enum):
     NEW = "NEW"
     REDEPED = "REDEPED"
-    WITHDRAWN = "WITHDRAWN"
+    INVENTORY = "INVENTORY"
 
 class Case(FirebaseObject):
     name: str

@@ -8,6 +8,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
 from app.controllers.fin_controller import FinController
+from app.models.domain.inventory import Inventory
 from app.models.domain.case import *
 from app.models.domain.gift import *
 
@@ -91,56 +92,6 @@ class CaseController(BaseController):
         except Exception as e:
             print(e)
             raise HTTPException(status_code=500, detail=str(e))
-
-
-    def open_case(self, user_id: str, case_id: str) -> Gift:
-        """
-        Open a case and return a random gift from it.
-        
-        :param case_id: The ID of the case to open.
-        :return: A Gift object representing the opened gift.
-        """
-        if not case_id:
-            raise HTTPException(status_code=400, detail="Case ID is required")
-        
-        case = self.get_case_by_id(case_id)
-        if not case.is_active:
-            raise HTTPException(status_code=400, detail="Case is not active")
-        
-        # Transfer funds from user to app
-        self._fin_controller.transfer_funds_from_user_to_app(
-            user_id=user_id,
-            amount=case.cost,
-            description=f"Opening case {case_id}, cost: {case.cost} TON"
-        )
-
-        gifts = self.get_case_gifts(case_id)
-        gifts.sort(key=lambda gift: gift.prob, reverse=True)
-
-        # Calculate cumulative probabilities
-        cum_probs = []
-        running = 0
-        for gift in gifts:
-            running += gift.prob
-            cum_probs.append(running)
-
-        r = int(random.random() * 100 * 100)
-        print(r)
-        idx = bisect(cum_probs, r)
-        prize = gifts[idx]
-
-        # Save CaseOpening record
-        case_opening = CaseOpening(
-            user_id=user_id,
-            case_id=case_id,
-            gift_id=prize.id,
-            gift_type=prize.type,
-            gift_volume=prize.volume,
-            status=CaseOpeningStatus.NEW,
-            open_at=datetime.now()
-        )
-        self._firebase_service.add(case_opening)
-        return case_opening
     
 
     def get_case_info(self, case: Case) -> CaseInfo:
@@ -183,6 +134,56 @@ class CaseController(BaseController):
 
         return case_info
     
+
+    def open_case(self, user_id: str, case_id: str) -> Gift:
+        """
+        Open a case and return a random gift from it.
+        
+        :param case_id: The ID of the case to open.
+        :return: A Gift object representing the opened gift.
+        """
+        if not case_id:
+            raise HTTPException(status_code=400, detail="Case ID is required")
+        
+        case = self.get_case_by_id(case_id)
+        if not case.is_active:
+            raise HTTPException(status_code=400, detail="Case is not active")
+        
+        # Transfer funds from user to app
+        self._fin_controller.transfer_funds_from_user_to_app(
+            user_id=user_id,
+            amount=case.cost,
+            description=f"Opening case {case_id}, cost: {case.cost} TON"
+        )
+
+        gifts = self.get_case_gifts(case_id)
+        gifts.sort(key=lambda gift: gift.prob, reverse=True)
+
+        # Calculate cumulative probabilities
+        cum_probs = []
+        running = 0
+        for gift in gifts:
+            running += gift.prob
+            cum_probs.append(running)
+
+        r = int(random.random() * 100 * 100)
+        idx = bisect(cum_probs, r)
+        prize = gifts[idx]
+
+        # Save CaseOpening record
+        case_opening = CaseOpening(
+            user_id=user_id,
+            case_id=case_id,
+            gift_id=prize.id,
+            gift_type=prize.type,
+            gift_volume=prize.volume,
+            status=CaseOpeningStatus.NEW,
+            open_at=datetime.now()
+        )
+        self._firebase_service.add(case_opening)
+        return case_opening
+    
+    
     def redep_openning(self, openning_id: str, user_id: str):
         """
         Redeem an existing case opening by topping up the user's balance with the opened gift volume.
@@ -219,4 +220,44 @@ class CaseController(BaseController):
         case_opening.status = CaseOpeningStatus.REDEPED
         self._firebase_service.update(id=case_opening.id, obj=case_opening)
         
+        return {"status": "ok"}
+    
+
+    def save_to_inventory(self, openning_id: str, user_id: str):
+        """
+        Save the opened gift to the user's inventory.
+        :param openning_id: The ID of the case opening to save.
+        :param user_id: The ID of the user saving the gift.
+        :return: A message indicating the success of the operation.
+        """
+
+        if not openning_id:
+            raise HTTPException(status_code=400, detail="Openning ID is required")
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="User ID is required")
+        
+        case_opening = self._firebase_service.fetch_by_id(model_class=CaseOpening, doc_id=openning_id)
+
+        if not case_opening:
+            raise HTTPException(status_code=404, detail="Case opening not found")
+        if case_opening.gift_type != GiftType.GIFT:
+            raise HTTPException(status_code=400, detail="Only case with a gift can be saved to inventory")
+        if case_opening.status != CaseOpeningStatus.NEW:
+            raise HTTPException(status_code=400, detail="Only new case openings can be saved to inventory")
+        if case_opening.user_id != user_id:
+            raise HTTPException(status_code=403, detail="You can only save your own case openings to inventory")
+        # Save gift to inventory
+        inventory_item = Inventory(
+            user_id=user_id,
+            gift_id=case_opening.gift_id,
+            volume_fixation=case_opening.gift_volume,
+            created_at=datetime.now().isoformat()
+        )
+
+        self._firebase_service.add(inventory_item)
+        # Update case opening status
+        case_opening.status = CaseOpeningStatus.INVENTORY
+        self._firebase_service.update(id=case_opening.id, obj=case_opening)
+
         return {"status": "ok"}

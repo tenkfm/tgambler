@@ -7,6 +7,7 @@ from app.models.domain.payment import Payment, InvoiceRequest
 from app.routes.user_routes import user_router
 from app.routes.case_routes import case_router
 from app.routes.fin_routes import fin_router
+from app.utils.wrappers import router_try_wrapper
 import requests
 
 ###
@@ -47,7 +48,8 @@ app.add_middleware(
 ###
 @app.get("/")
 async def root():
-    return {"message": "Hello Bot 🤖"}
+    return {"message": f"Roll the case and get your gifts on @{settings.bot_username}"}
+
 
 @app.post("/webhooks/telegram")
 async def telegram_webhook(request: Request):
@@ -77,7 +79,9 @@ async def telegram_webhook(request: Request):
             print("[error, data not valid]", str(e))  
             return {"status": "fail"}
 
+
 @app.post("/invoice")
+@router_try_wrapper
 async def invoice(request: Request):
     request_data = await request.json()
     invoice_request = InvoiceRequest(**request_data)

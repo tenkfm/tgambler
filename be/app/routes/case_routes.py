@@ -1,25 +1,23 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from app.services.container import container
 from app.models.domain.gift import Gift
+from app.utils.wrappers import router_try_wrapper
 
 case_router = APIRouter(prefix="/api/case", tags=["cases"])
 
-
 @case_router.get("/")
+@router_try_wrapper
 async def get_active_cases():
     """
     🧾 Fetch all active cases.
     :return: A list of active cases.
     """
-    try:
-        cases = container.case_controller.get_active_cases()
-        return {"cases": cases}
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    cases = container.case_controller.get_active_cases()
+    return {"cases": cases}
     
 
 @case_router.get("/{case_id}/info")
+@router_try_wrapper
 async def get_case_info(case_id: str):
     """
     ℹ Fetch detailed information about a specific case by its ID.
@@ -29,15 +27,12 @@ async def get_case_info(case_id: str):
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
-    try:
-        case = container.case_controller.get_case_by_id(case_id)
-        return container.case_controller.get_case_info(case)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    case = container.case_controller.get_case_by_id(case_id)
+    return container.case_controller.get_case_info(case)
     
 
 @case_router.get("/{case_id}/gifts")
+@router_try_wrapper
 async def get_case_gifts(case_id: str):
     """
     🎁 Fetch all active gifts for a specific case.
@@ -47,15 +42,12 @@ async def get_case_gifts(case_id: str):
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
-    try:
-        gifts = container.case_controller.get_case_gifts(case_id)
-        return {"gifts": gifts}
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    gifts = container.case_controller.get_case_gifts(case_id)
+    return {"gifts": gifts}
 
 
 @case_router.post("/{case_id}/gifts")
+@router_try_wrapper
 async def add_gift_to_case(case_id: str, gift: Gift):
     """
     ➕ Add a new gift to the specified case.
@@ -66,15 +58,12 @@ async def add_gift_to_case(case_id: str, gift: Gift):
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
-    try:
-        container.case_controller.add_gift(case_id, gift)
-        return {"status": "ok"}
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    container.case_controller.add_gift(case_id, gift)
+    return {"status": "ok"}
     
 
 @case_router.post("/{case_id}/open")
+@router_try_wrapper
 async def open_case(case_id: str, x_token: str = Header(...)):
     """
     🚀 Open a case by its ID.
@@ -84,18 +73,12 @@ async def open_case(case_id: str, x_token: str = Header(...)):
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
-    try:
-        user_id = container.user_ctonroller.validate_token(x_token)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    try:
-        return container.case_controller.open_case(user_id, case_id)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    user_id = container.user_ctonroller.validate_token(x_token)    
+    return container.case_controller.open_case(user_id, case_id)
+
     
 @case_router.post("/{openning_id}/redep")
+@router_try_wrapper
 async def redep_openning(openning_id: str, x_token: str = Header(...)):
     """
     🔄 Redep an existing case opening - Topup balance with openning gift volume
@@ -105,14 +88,23 @@ async def redep_openning(openning_id: str, x_token: str = Header(...)):
     if not openning_id:
         raise HTTPException(status_code=400, detail="Openning ID is required")
     
-    try:
-        user_id = container.user_ctonroller.validate_token(x_token)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
+    user_id = container.user_ctonroller.validate_token(x_token)    
     # Redep an existing case opening
-    try:
-        return container.case_controller.redep_openning(openning_id, user_id)
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    return container.case_controller.redep_openning(openning_id, user_id)
+
+    
+@case_router.post("/{openning_id}/save")
+@router_try_wrapper
+async def save_openning(openning_id: str, x_token: str = Header(...)):
+    """
+    💾 Save an existing case opening to inventory
+    :param openning_id: The ID of the case opening to save.
+    :return: A random gift from the saved case opening.
+    """
+
+    if not openning_id:
+        raise HTTPException(status_code=400, detail="Openning ID is required")
+    
+    user_id = container.user_ctonroller.validate_token(x_token)
+    # Save an existing case opening
+    return container.case_controller.save_to_inventory(openning_id, user_id)
