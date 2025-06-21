@@ -11,7 +11,8 @@ def router_try_wrapper(func):
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
-        except HTTPException:
+        except HTTPException as httpe:
+            print("Error:", httpe)
             raise
         except Exception as e:
             print("Unexpected error in router:", e)

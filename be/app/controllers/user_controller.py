@@ -26,28 +26,24 @@ class UserController(BaseController):
         # secret_key = HMAC-SHA256(bot_token, "WebAppData")
         # hash == HMAC_SHA256(secret_key, data_string)
 
-        try:
-             # Check if user exists
-            users = self._firebase_service.fetch_all(
-                model_class=UserInfo,
-                filters=[FieldFilter("tg_id", "==", user.tg_id)]
-            )
+        # Check if user exists
+        db_user = self._firebase_service.fetch_one(
+            model_class=UserInfo,
+            filters=[FieldFilter("tg_id", "==", user.tg_id)]
+        )
 
-            if users and users.__len__() > 0:
-                  # Get the first user if exists
-                self.__update_user_on_launch(user, users[0].id)
-                # Generate a JWT token
-                token = self.__generate_jwt(user_id=users[0].id)
-                return {"access_token": token}
-            else:
-                # User not found, create a new user
-                new_user_id = self.create_user(user)
-                # Generate a JWT token
-                token = self.__generate_jwt(user_id=new_user_id)
-                return {"access_token": token}
-        except Exception as e:
-            print(e)
-            raise HTTPException(status_code=500, detail=str(e))
+        if db_user:
+                # Get the first user if exists
+            self.__update_user_on_launch(db_user, db_user.id)
+            # Generate a JWT token
+            token = self.__generate_jwt(user_id=db_user.id)
+            return {"access_token": token}
+        else:
+            # User not found, create a new user
+            new_user_id = self.create_user(user)
+            # Generate a JWT token
+            token = self.__generate_jwt(user_id=new_user_id)
+            return {"access_token": token}
         
     def validate_token(self, token: str) -> str:
         try:
@@ -111,6 +107,7 @@ class UserController(BaseController):
             last_updated=datetime.now()
         )
         self._firebase_service.add(ton_wallet)
+        
         """
         Create user's COIN wallet.
         """
@@ -118,6 +115,17 @@ class UserController(BaseController):
             user_id=user_id,
             balance=0,
             currency=Currency.COIN,
+            last_updated=datetime.now()
+        )
+        self._firebase_service.add(coin_wallet)
+
+        """
+        Create user's XTR wallet.
+        """
+        coin_wallet = Wallet(
+            user_id=user_id,
+            balance=0,
+            currency=Currency.XTR,
             last_updated=datetime.now()
         )
         self._firebase_service.add(coin_wallet)

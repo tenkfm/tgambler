@@ -30,10 +30,14 @@ class CaseController(BaseController):
         :return: A list of Case objects that are currently active.
         """
 
-        return self._firebase_service.fetch_all(
+        cases = self._firebase_service.fetch_all(
             model_class=Case,
             filters=[FieldFilter("is_active", "==", True)]
         )
+
+        if not cases:
+            raise HTTPException(status_code=404, detail="No active cases found")
+        return cases
     
     def get_case_by_id(self, case_id: str) -> Case:
         """
@@ -62,13 +66,18 @@ class CaseController(BaseController):
         if not case_id:
             raise HTTPException(status_code=400, detail="Case ID is required")
         
-        return self._firebase_service.fetch_all(
+        gifts = self._firebase_service.fetch_all(
             model_class=Gift,
             filters=[
                 FieldFilter("is_active", "==", True),
                 FieldFilter("case_id", "==", case_id)
             ]
         )
+
+        if not gifts:
+            raise HTTPException(status_code=404, detail="No gifts found for this case")
+        
+        return gifts
     
     def add_gift(self, case_id: str, gift: Gift) -> Gift:
         """

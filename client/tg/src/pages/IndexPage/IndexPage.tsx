@@ -30,10 +30,10 @@ export const IndexPage: FC = () => {
     setMessage(null);
 
     axios.post(
-      "https://symmetrical-space-goldfish-64jjvgw67cx5xx-8000.app.github.dev/invoice",
+      "https://8ded-31-61-238-2.ngrok-free.app/api/fin/xtr_invoice",
       {
         th_id: initDataState?.user?.id || 0,
-        amount: 10
+        amount: 200, // In cents
       }
     )
     .then(response => {

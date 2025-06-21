@@ -3,10 +3,10 @@ from datetime import datetime
 from app.services.firebase.firebase_object import FirebaseObject
 
 class UserInfo(FirebaseObject):
-    tg_id: str
+    tg_id: int
     username: str
     first_name: str
-    last_name: Optional[str]
+    last_name: Optional[str] = None
     language_code: str
     photo_url: str
 

@@ -1,10 +1,13 @@
+import uuid
 from fastapi import Depends
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
 from app.controllers.base_controller import BaseController
 from app.services.firebase.firebase_service import FirebaseService
-from app.models.domain.wallet import Transaction, Wallet
+from app.models.network.fin.xtr_invoice import XTRInvoice
+from app.models.domain.wallet import Transaction, Wallet, TopUpRequest, Currency, TopUpStatus
 from app.settings import Settings
+import requests
 
 class FinController(BaseController):
     _firebase_service: FirebaseService
@@ -16,27 +19,28 @@ class FinController(BaseController):
             self,
             user_id: str,
             amount: int,
-            description: str
+            currency: Currency,
+            description: str,
+            external_id: str
         ):
         """
         Top up user wallet with the specified amount and description.
         :param user_id: ID of the user whose wallet is to be topped up.
         :param amount: Amount to be topped up in cents.
+        :param currency: Currency of the top-up, e.g., Currency.TON.
         :param description: Description of the top-up request.
+        :param external_id: External ID for the top-up request, used for tracking.
         :raises Exception: If the user wallet is not found or if there are insufficient funds.
         """
 
-        user_wallets = self._firebase_service.fetch_all(
+        to_wallet_id = user_wallet.id
+        user_wallet = self._firebase_service.fetch_one(
             model_class=Wallet,
-            filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", "TON")]
+            filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", currency.value)]
         )
         
-        if not user_wallets:
-            raise Exception("User wallet not found")
-        
-        from_wallet_id = Settings().app_wallet_id
-        user_wallet = user_wallets[0]
-        to_wallet_id = user_wallet.id
+        if not user_wallet:
+            raise Exception(f"User wallet not found user_id: {user_id}, currency: {currency.value}")
 
         # Update the user's wallet balance
         user_wallet.balance += amount
@@ -44,9 +48,10 @@ class FinController(BaseController):
 
         # Create a new transaction
         transaction = Transaction(
-            from_wallet_id="_TopUp",
+            from_wallet_id=f"_TopUp - {external_id}",
             to_wallet_id=to_wallet_id,
             amount=amount,
+            currency=currency,
             description=description,
             timestamp=datetime.now()
         )
@@ -67,16 +72,15 @@ class FinController(BaseController):
         :raises Exception: If the user's wallet is not found or if there are insufficient funds.
         """
 
-        user_wallets = self._firebase_service.fetch_all(
+        #TODO: Consider transaction currency
+        from_wallet_id = Settings().app_wallet_id
+        to_wallet_id = self._firebase_service.fetch_all(
             model_class=Wallet,
             filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", "TON")]
         )
 
-        if not user_wallets:
+        if not to_wallet_id:
             raise Exception("User wallet not found")
-        
-        from_wallet_id = Settings().app_wallet_id
-        to_wallet_id = user_wallets[0].id  # Assuming the first wallet is the one to use
 
         self.__process_transaction(
             from_wallet_id=from_wallet_id,
@@ -99,6 +103,7 @@ class FinController(BaseController):
         :raises Exception: If the user's wallet is not found or if there are insufficient funds.
         """
 
+        #TODO: Consider transaction currency
         user_wallets = self._firebase_service.fetch_all(
             model_class=Wallet,
             filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", "TON")]
@@ -116,6 +121,59 @@ class FinController(BaseController):
             amount=amount,
             description=description
         )
+
+
+    def send_xtr_invoice_to_telegram(self, user_id: str, title: str, description: str, invoice: XTRInvoice) -> dict:
+        """
+        Create an invoice for a user to pay in XTR (Telegram Stars).
+        :param invoice: An instance of XTRInvoice containing the details.
+        :return: A dictionary containing the invoice URL.
+        :raises Exception: If the invoice creation fails.
+        """
+
+        # Save XTRTopUp in the database
+        external_id = f"{invoice.th_id}&&&{uuid.uuid4()}"
+        topup_request = TopUpRequest(
+            user_id=user_id,
+            amount=invoice.amount,
+            provider="Telegram",
+            currency=Currency.XTR,
+            external_id=external_id,
+            status=TopUpStatus.PENDING,
+            created_at=datetime.now()
+        )
+        topup_request = self._firebase_service.add(topup_request)
+
+        # Set payload with payment details
+        data = {
+            "title": title,
+            "description": description,
+            "payload": external_id,
+            "currency": "XTR",
+            "prices": [{"label": "Telegram Stars", "amount": int(invoice.amount / 100)}]
+        }
+
+        # Send request to Telegram API to create invoice link
+        headers = {'Content-Type': 'application/json'}
+        url = f"https://api.telegram.org/bot{Settings().telegram_bot_token}/createInvoiceLink"
+        response = requests.post(url, json=data, headers=headers)
+
+        # Successful result
+        if response.ok and response.json().get('ok'):
+            topup_request.info = {"url": response.json()['result']}
+            self._firebase_service.update(id=topup_request.id, obj=topup_request)
+            return {"url": response.json()['result']}
+        
+        # Failed result
+        topup_request.status = TopUpStatus.FAILED
+        topup_request.info = response.json()
+        self._firebase_service.update(id=topup_request.id, obj=topup_request)
+        raise Exception("Invoice creation failed.")
+
+
+    #
+    # Private methods
+    #
 
     def __process_transaction(
             self,
@@ -153,6 +211,7 @@ class FinController(BaseController):
             from_wallet_id=from_wallet_id,
             to_wallet_id=to_wallet_id,
             amount=amount,
+            currency=Currency.TON,  # Transactions are in TON currency
             description=description,
             timestamp=datetime.now()
         )

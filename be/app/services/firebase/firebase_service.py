@@ -47,7 +47,7 @@ class FirebaseService(FirebaseServiceInterface):
             # Raise a custom exception if there's an error
             raise FirebaseServiceException(f"Failed to add document to {obj.collection_name()}: {str(e)}")
         
-    def add_with_doc_id(self, doc_id: str, obj: FirebaseObject) -> str:
+    def add_with_doc_id(self, doc_id: str, obj: FirebaseObject) -> FirebaseObject:
         """
         Add an object to the specified Firestore collection with specific document ID.
         
@@ -134,12 +134,9 @@ class FirebaseService(FirebaseServiceInterface):
             doc_ref = self.db.collection(model_class.collection_name()).document(doc_id)
             doc = doc_ref.get()  # Get the document
             
-            if not doc.exists:               # Document does not exist
+            if not doc.exists: # Document does not exist
                 return None
             
-            if not doc.exists:
-                raise Exception(f"Document with ID {doc_id} not found.")
-
             # Convert the document data into an instance of the model_class
             data = doc.to_dict()
             data["id"] = doc.id  # Include the Firestore document ID in the data
@@ -149,6 +146,23 @@ class FirebaseService(FirebaseServiceInterface):
         except Exception as e:
             raise FirebaseServiceException(f"Error fetching document from {model_class.collection_name()}: {e}")
         
+    def fetch_one(self, model_class: Type[FirebaseObject], filters: Optional[List[FieldFilter]]) -> Optional[FirebaseObject]:
+        """
+        Fetch a single document from the specified Firestore collection and convert it into an object of type `model_class`.
+        
+        :param model_class: The class to which the document should be mapped (e.g., User, Product).
+        :param filters: Optional list of filters to apply to the query.
+        :return: An object of type `model_class` or None if no document matches the query.
+        """
+
+        objects = self.fetch_all(model_class=model_class, filters=filters)
+        if not objects:
+            return None
+        
+        if len(objects) != 1:
+            raise FirebaseServiceException(f"Expected one document, but found {len(objects)} in {model_class.collection_name()}.")
+        
+        return objects[0]  # Return the single object found
 
     def update(self, id: str, obj: FirebaseObject) -> FirebaseObject:
         """

@@ -1,6 +1,5 @@
 import type { FC } from 'react';
-import { Avatar, Button, Headline, Caption } from '@telegram-apps/telegram-ui';
-import { Link } from '@/components/Link/Link.tsx';
+import { Avatar, Headline, Caption } from '@telegram-apps/telegram-ui';
 import { TonConnectButton } from '@tonconnect/ui-react';
 
 import {

@@ -56,7 +56,7 @@ def create_app_wallet():
 
 def setup_telegram_api_webhook():
     bot_token = Settings().telegram_bot_token
-    webhook_url = f"{Settings().app_domain}/webhooks/telegram"
+    webhook_url = f"{Settings().app_domain}/webhook/telegram_xtr_invoice"
 
     url = f"https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}"
     resp = requests.get(url)
