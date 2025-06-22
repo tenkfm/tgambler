@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from app.settings import Settings
 from bot.redis.redis_listener import listen_redis
+from bot.redis.redis_listener_gift_withdrawer import listen_gift_withdrawer
 
 # Gloab settings
 settings = Settings()
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     # ✅ добавляем Redis listener как startup callback
     async def on_startup(app_):
         asyncio.create_task(listen_redis(app_))
+        asyncio.create_task(listen_gift_withdrawer(app_))
 
     app.post_init = on_startup
 
