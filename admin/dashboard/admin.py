@@ -13,7 +13,8 @@ from common.services.firebase.firebase_service import FirebaseService
 from common.models.domain.user       import UserInfo
 from common.models.domain.wallet     import Wallet, Transaction, TopUpRequest
 from common.models.domain.case      import Case, CaseOpening
-from common.models.domain.gift      import Gift, GiftType
+from common.models.domain.gift      import Gift
+from common.models.domain.inventory import Inventory
 
 from .models import (
     UserInfoItem,
@@ -22,7 +23,8 @@ from .models import (
     TopUpRequestItem,
     CaseItem,
     CaseOpeningItem,
-    GiftItem
+    GiftItem,
+    InventoryItem
 )
 
 firebase_service = FirebaseService(api_key=settings.FIREBASE_SERVICE_ACCOUNT_JSON)
@@ -198,3 +200,12 @@ class GiftAdmin(FirebaseAdminMixin, admin.ModelAdmin):
             firebase_service.update(pyd.id, pyd)
         else:
             firebase_service.add(pyd)
+
+@admin.register(InventoryItem)
+class InventoryAdmin(FirebaseAdminMixin, admin.ModelAdmin):
+    PYDANTIC_CLASS = Inventory
+    PROXY_MODEL    = InventoryItem
+
+    list_display   = ('user_id', 'gift_id', 'volume_fixation', 'created_at')
+    search_fields  = ('user_id', 'gift_id')
+    readonly_fields= ('id',)

@@ -135,3 +135,18 @@ class GiftItem(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.case_id})"
+    
+class InventoryItem(models.Model):
+    id               = models.CharField(max_length=100, primary_key=True)
+    user_id          = models.CharField(max_length=100)
+    gift_id          = models.CharField(max_length=100)
+    volume_fixation  = models.BigIntegerField()
+    created_at       = models.CharField(max_length=100)  # храним ISO-строку
+
+    class Meta:
+        managed = True
+        verbose_name        = "Inventory"
+        verbose_name_plural = "Inventories"
+
+    def __str__(self):
+        return f"{self.user_id} – {self.gift_id} @ {self.created_at}"
