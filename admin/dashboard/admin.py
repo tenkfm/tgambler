@@ -1,20 +1,18 @@
 # admin/dashboard/admin.py
 
 import json
-from django import forms
 from django.contrib import admin
 from django.conf import settings
 from django.db import models
-from django.db.models.query import QuerySet
 from django.forms import Textarea
 from django.contrib.admin.views.main import ChangeList
 
 from common.services.firebase.firebase_service import FirebaseService
 from common.models.domain.user       import UserInfo
 from common.models.domain.wallet     import Wallet, Transaction, TopUpRequest
-from common.models.domain.case      import Case, CaseOpening
-from common.models.domain.gift      import Gift
-from common.models.domain.inventory import Inventory
+from common.models.domain.case       import Case, CaseOpening
+from common.models.domain.gift       import Gift
+from common.models.domain.inventory  import Inventory
 
 from .models import (
     UserInfoItem,
@@ -24,9 +22,10 @@ from .models import (
     CaseItem,
     CaseOpeningItem,
     GiftItem,
-    InventoryItem
+    InventoryItem,
 )
 
+# Инициализируем Firebase сервис один раз
 firebase_service = FirebaseService(api_key=settings.FIREBASE_SERVICE_ACCOUNT_JSON)
 
 
@@ -49,20 +48,15 @@ class FirebaseAdminMixin:
         return FirebaseChangeList
 
     def _load_items(self, search_term=None):
-        pyd_objs = firebase_service.fetch_all(self.PYDANTIC_CLASS)
-
+        objs = firebase_service.fetch_all(self.PYDANTIC_CLASS)
         if search_term:
             term = search_term.lower()
-            pyd_objs = [
-                obj for obj in pyd_objs
-                if any(
-                    term in str(getattr(obj, fld, "")).lower()
-                    for fld in self.search_fields
-                )
+            objs = [
+                o for o in objs
+                if any(term in str(getattr(o, f, "")).lower()
+                       for f in self.search_fields)
             ]
-
-        proxy = self.PROXY_MODEL
-        self._items = [proxy(**obj.model_dump()) for obj in pyd_objs]
+        self._items = [self.PROXY_MODEL(**o.model_dump()) for o in objs]
 
     def get_queryset(self, request):
         self._load_items()
@@ -73,28 +67,16 @@ class FirebaseAdminMixin:
         return self.PROXY_MODEL.objects.none(), False
 
     def get_object(self, request, object_id, from_field=None):
-        """
-        Загружает один объект из Firebase и превращает в Django-модель.
-        НЕ конвертируем все datetime в строки!
-        Только поля info/payload, если они есть.
-        """
-        pyd_obj = firebase_service.fetch_by_id(self.PYDANTIC_CLASS, object_id)
-        if not pyd_obj:
-            return None
-
-        data = pyd_obj.model_dump()
-
-        # Все остальные поля (включая datetime) оставляем как есть,
-        # чтобы Django понял их как datetime и не пытался вызвать .utcoffset() на строке.
-        return self.PROXY_MODEL(**data)
+        o = firebase_service.fetch_by_id(self.PYDANTIC_CLASS, object_id)
+        return self.PROXY_MODEL(**o.model_dump()) if o else None
 
     def save_model(self, request, obj, form, change):
-        data    = {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
-        pyd_obj = self.PYDANTIC_CLASS(**data)
+        data = {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
+        pyd  = self.PYDANTIC_CLASS(**data)
         if change:
-            firebase_service.update(pyd_obj.id, pyd_obj)
+            firebase_service.update(pyd.id, pyd)
         else:
-            firebase_service.add(pyd_obj)
+            firebase_service.add(pyd)
 
     def delete_model(self, request, obj):
         firebase_service.delete(self.PYDANTIC_CLASS.collection_name(), obj.id)
@@ -104,51 +86,96 @@ class FirebaseAdminMixin:
 class UserInfoAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = UserInfo
     PROXY_MODEL    = UserInfoItem
-    list_display   = ('tg_id','username','first_name','last_name','language_code','is_premium')
-    search_fields  = ('username','first_name','last_name','tg_id')
-    readonly_fields= ('id','tg_id','username')
+
+    list_display    = ('tg_id', 'username', 'first_name', 'last_name', 'language_code', 'is_premium')
+    search_fields   = ('username', 'first_name', 'last_name', 'tg_id')
+    readonly_fields = ('id', 'tg_id', 'username')
 
 
 @admin.register(WalletItem)
 class WalletAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = Wallet
     PROXY_MODEL    = WalletItem
-    list_display   = ('user_id','balance','currency','last_updated')
-    search_fields  = ('user_id',)
+
+    list_display  = ('user_id', 'balance', 'currency', 'last_updated')
+    search_fields = ('user_id',)
 
 
 @admin.register(TransactionItem)
 class TransactionAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = Transaction
     PROXY_MODEL    = TransactionItem
-    list_display   = ('from_wallet_id','to_wallet_id','amount','currency','timestamp')
-    search_fields  = ('from_wallet_id','to_wallet_id')
+
+    list_display  = ('from_wallet_id', 'to_wallet_id', 'amount', 'currency', 'timestamp')
+    search_fields = ('from_wallet_id', 'to_wallet_id')
 
 
 @admin.register(TopUpRequestItem)
 class TopUpRequestAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = TopUpRequest
     PROXY_MODEL    = TopUpRequestItem
-    list_display   = ('user_id','amount','provider','currency','external_id','status','created_at')
-    search_fields  = ('user_id','external_id','status')
-    readonly_fields= ('id','created_at')
-    exclude        = ('info','payload')
+
+    list_display    = ('user_id', 'amount', 'provider', 'currency', 'external_id', 'status', 'created_at')
+    search_fields   = ('user_id', 'external_id', 'status')
+    readonly_fields = ('id', 'created_at')
+    exclude         = ('info', 'payload')
     formfield_overrides = {
-        models.JSONField: {'widget': Textarea(attrs={'rows':3,'cols':60})},
+        models.JSONField: {'widget': Textarea(attrs={'rows': 3, 'cols': 60})},
     }
+
+
+class GiftInline(admin.TabularInline):
+    model            = GiftItem
+    fk_name          = 'case'
+    extra            = 0
+    show_change_link = True
+
+    # Показываем только нужные поля
+    fields          = ('name', 'volumef', 'probf', 'is_active', 'type')
+    readonly_fields = fields
+
+    PYDANTIC_CLASS = Gift
+    FK_FIELD       = 'case_id'
+
+    def volumef(self, obj):
+        return obj.volume / 100.0 if obj.volume is not None else None
+    volumef.short_description = 'Volume'
+
+    def probf(self, obj):
+        return obj.prob / 100.0 if obj.prob is not None else None
+    probf.short_description = 'Probability'
+
+    def get_formset(self, request, obj=None, **kwargs):
+        FormSet = super().get_formset(request, obj, **kwargs)
+
+        if obj:
+            all_gifts = firebase_service.fetch_all(self.PYDANTIC_CLASS)
+            related   = [g for g in all_gifts if getattr(g, self.FK_FIELD) == obj.id]
+            instances = [self.model(**g.model_dump()) for g in related]
+            qs        = self.model.objects.none()
+            qs._result_cache = instances
+        else:
+            qs = self.model.objects.none()
+
+        def get_queryset(_self):
+            return qs
+        FormSet.get_queryset = get_queryset
+
+        return FormSet
 
 
 @admin.register(CaseItem)
 class CaseAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = Case
     PROXY_MODEL    = CaseItem
-    list_display   = ('name','costf','is_active')
-    search_fields  = ('name',)
-    readonly_fields= ('id',)
 
-    # costf() — метод Pydantic, можно показать его в списке:
+    list_display    = ('name', 'costf', 'is_active')
+    search_fields   = ('name',)
+    readonly_fields = ('id',)
+    inlines         = [GiftInline]
+
     def costf(self, obj):
-        return obj.cost / 100.0
+        return obj.cost / 100.0 if obj.cost is not None else None
     costf.short_description = 'Cost (USD)'
 
 
@@ -156,56 +183,51 @@ class CaseAdmin(FirebaseAdminMixin, admin.ModelAdmin):
 class CaseOpeningAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = CaseOpening
     PROXY_MODEL    = CaseOpeningItem
-    list_display   = ('user_id','case_id','gift_id','gift_type','gift_volume','status','open_at')
-    search_fields  = ('user_id','case_id','gift_id','status')
-    readonly_fields= ('id','open_at')
 
-    # Преобразуем gift_volume в человеческий вид
+    list_display    = ('user_id', 'case_id', 'gift_id', 'gift_type', 'gift_volume', 'status', 'open_at')
+    search_fields   = ('user_id', 'case_id', 'gift_id', 'status')
+    readonly_fields = ('id', 'open_at')
+
     def gift_volumef(self, obj):
         return obj.gift_volume / 100.0
-    gift_volumef.short_description = 'Gift Vol.'
+    gift_volumef.short_description = 'Gift Volume'
+
 
 @admin.register(GiftItem)
 class GiftAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = Gift
     PROXY_MODEL    = GiftItem
 
-    list_display   = ('case_id','name','volumef','probf','is_active','type')
-    search_fields  = ('name','case_id')
-    readonly_fields= ('id',)
+    # Сначала name, затем case_id
+    list_display    = ('name', 'case_id', 'volumef', 'probf', 'is_active', 'type')
+    search_fields   = ('name', 'case_id')
+    readonly_fields = ('id',)
 
     def volumef(self, obj):
-        return obj.volume / 100.0
+        return obj.volume / 100.0 if obj.volume is not None else None
     volumef.short_description = 'Volume'
 
     def probf(self, obj):
-        return obj.prob / 100.0
+        return obj.prob / 100.0 if obj.prob is not None else None
     probf.short_description = 'Probability'
 
     def save_model(self, request, obj, form, change):
-        # собираем данные
         data = {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
-
-        # нормализуем поле type:
-        raw = data.get('type')
+        raw  = data.get('type')
         if isinstance(raw, str):
-            # если пришло "GiftType.GIFT" или "GIFT", оставляем только после точки
             data['type'] = raw.split('.')[-1]
-        # либо можно явно в Enum:
-        # data['type'] = GiftType(data['type']).value
-
-        # создаём и сохраняем Pydantic-объект
         pyd = self.PYDANTIC_CLASS(**data)
         if change:
             firebase_service.update(pyd.id, pyd)
         else:
             firebase_service.add(pyd)
 
+
 @admin.register(InventoryItem)
 class InventoryAdmin(FirebaseAdminMixin, admin.ModelAdmin):
     PYDANTIC_CLASS = Inventory
     PROXY_MODEL    = InventoryItem
 
-    list_display   = ('user_id', 'gift_id', 'volume_fixation', 'created_at')
-    search_fields  = ('user_id', 'gift_id')
-    readonly_fields= ('id',)
+    list_display    = ('user_id', 'gift_id', 'volume_fixation', 'created_at')
+    search_fields   = ('user_id', 'gift_id')
+    readonly_fields = ('id',)

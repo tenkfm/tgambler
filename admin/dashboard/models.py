@@ -96,7 +96,7 @@ class CaseItem(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.cost/100:.2f})"
-
+    
 
 class CaseOpeningItem(models.Model):
     id           = models.CharField(max_length=100, primary_key=True)
@@ -119,10 +119,19 @@ class CaseOpeningItem(models.Model):
 
 class GiftItem(models.Model):
     id         = models.CharField(max_length=100, primary_key=True)
-    case_id    = models.CharField(max_length=100)
+    # вместо CharField case_id добавляем ForeignKey на CaseItem
+    case = models.ForeignKey(
+        CaseItem,
+        on_delete=models.DO_NOTHING,
+        db_column="case_id",
+        to_field="id",
+        related_name="gifts",
+        null=True,
+        blank=True
+    )
     name       = models.CharField(max_length=200)
     image_url  = models.URLField(max_length=500)
-    background = models.CharField(max_length=100)
+    background = models.URLField(max_length=500)
     volume     = models.BigIntegerField()
     prob       = models.BigIntegerField()
     is_active  = models.BooleanField(default=True)
