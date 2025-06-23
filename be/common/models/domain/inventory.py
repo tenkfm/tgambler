@@ -1,4 +1,4 @@
-from app.services.firebase.firebase_object import FirebaseObject
+from common.services.firebase.firebase_object import FirebaseObject
 
 class Inventory(FirebaseObject):
     user_id: str

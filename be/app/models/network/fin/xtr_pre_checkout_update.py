@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from app.models.domain.wallet import Currency
+from common.models.domain.wallet import Currency
 
 
 class XTRFrom(BaseModel):

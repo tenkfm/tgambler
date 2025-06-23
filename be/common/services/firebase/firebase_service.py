@@ -1,11 +1,11 @@
 import json
-from typing import List, Type, Optional
 import firebase_admin
+from typing import List, Type, Optional
 from firebase_admin import credentials, firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
-from app.services.firebase.firebase_service_exception import FirebaseServiceException
-from app.services.firebase.firebase_service_interface import FirebaseServiceInterface
-from app.services.firebase.firebase_object import FirebaseObject
+from common.services.firebase.firebase_service_exception import FirebaseServiceException
+from common.services.firebase.firebase_service_interface import FirebaseServiceInterface
+from common.services.firebase.firebase_object import FirebaseObject
 
 # Firebase service implementation
 class FirebaseService(FirebaseServiceInterface):

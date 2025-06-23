@@ -2,9 +2,9 @@ import sys
 import requests
 from pathlib import Path
 from app.settings import Settings
-from app.services.firebase.firebase_service import FirebaseService
-from app.models.domain.wallet import Wallet
-from app.services.container import container
+from common.services.firebase.firebase_service import FirebaseService
+from common.models.domain.wallet import Wallet
+from app.container import container
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 

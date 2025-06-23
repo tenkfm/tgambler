@@ -1,6 +1,3 @@
-from typing import Optional
-from datetime import datetime
-from app.services.firebase.firebase_object import FirebaseObject
 from pydantic import BaseModel
 
 class WalletTopupRequest(BaseModel):

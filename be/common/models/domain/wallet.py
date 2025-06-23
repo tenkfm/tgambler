@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
-from app.services.firebase.firebase_object import FirebaseObject
+from common.services.firebase.firebase_object import FirebaseObject
 
 class Currency(str, Enum):
     TON = "TON"

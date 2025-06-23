@@ -5,12 +5,12 @@ from functools import reduce
 from fastapi import HTTPException, Depends
 from google.cloud.firestore_v1.base_query import FieldFilter
 
+from common.services.firebase.firebase_service import FirebaseService
 from app.controllers.base_controller import BaseController
-from app.services.firebase.firebase_service import FirebaseService
 from app.controllers.fin_controller import FinController
-from app.models.domain.inventory import Inventory
-from app.models.domain.case import *
-from app.models.domain.gift import *
+from common.models.domain.inventory import Inventory
+from common.models.domain.case import *
+from common.models.domain.gift import *
 
 class CaseController(BaseController):
     _firebase_service: FirebaseService
@@ -18,8 +18,8 @@ class CaseController(BaseController):
 
     def __init__(
             self,
-            firebase_service: FirebaseService = Depends(FirebaseService),
-            fin_controller: FinController = Depends(FinController)
+            firebase_service: FirebaseService,
+            fin_controller: FinController
         ):
         self._firebase_service = firebase_service
         self._fin_controller = fin_controller
@@ -144,7 +144,7 @@ class CaseController(BaseController):
         return case_info
     
 
-    def open_case(self, user_id: str, case_id: str) -> Gift:
+    def open_case(self, user_id: str, case_id: str) -> CaseOpening:
         """
         Open a case and return a random gift from it.
         
@@ -189,6 +189,7 @@ class CaseController(BaseController):
             status=CaseOpeningStatus.NEW,
             open_at=datetime.now()
         )
+
         self._firebase_service.add(case_opening)
         return case_opening
     
@@ -201,6 +202,7 @@ class CaseController(BaseController):
         :param user_id: The ID of the user redeeming the opening.
         :return: A message indicating the success of the operation.
         """
+
         if not openning_id:
             raise HTTPException(status_code=400, detail="Openning ID is required")
         
@@ -208,7 +210,7 @@ class CaseController(BaseController):
             raise HTTPException(status_code=400, detail="User ID is required")
         
         case_opening = self._firebase_service.fetch_by_id(model_class=CaseOpening, doc_id=openning_id)
-        
+
         if not case_opening:
             raise HTTPException(status_code=404, detail="Case opening not found")
         

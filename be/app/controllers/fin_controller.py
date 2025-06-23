@@ -3,10 +3,10 @@ from fastapi import Depends
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
 from app.controllers.base_controller import BaseController
-from app.services.firebase.firebase_service import FirebaseService
 from app.models.network.fin.xtr_invoice import XTRInvoice
-from app.models.domain.wallet import Transaction, Wallet, TopUpRequest, Currency, TopUpStatus
 from app.settings import Settings
+from common.services.firebase.firebase_service import FirebaseService
+from common.models.domain.wallet import Transaction, Wallet, TopUpRequest, Currency, TopUpStatus
 import requests
 
 class FinController(BaseController):
@@ -33,11 +33,11 @@ class FinController(BaseController):
         :raises Exception: If the user wallet is not found or if there are insufficient funds.
         """
 
-        to_wallet_id = user_wallet.id
         user_wallet = self._firebase_service.fetch_one(
             model_class=Wallet,
             filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", currency.value)]
         )
+        to_wallet_id = user_wallet.id
         
         if not user_wallet:
             raise Exception(f"User wallet not found user_id: {user_id}, currency: {currency.value}")
@@ -73,18 +73,17 @@ class FinController(BaseController):
         """
 
         #TODO: Consider transaction currency
-        from_wallet_id = Settings().app_wallet_id
-        to_wallet_id = self._firebase_service.fetch_all(
+        to_wallet = self._firebase_service.fetch_one(
             model_class=Wallet,
             filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", "TON")]
         )
 
-        if not to_wallet_id:
+        if not to_wallet:
             raise Exception("User wallet not found")
 
         self.__process_transaction(
-            from_wallet_id=from_wallet_id,
-            to_wallet_id=to_wallet_id,
+            from_wallet_id=Settings().app_wallet_id,
+            to_wallet_id=to_wallet.id,
             amount=amount,
             description=description
         )
@@ -104,15 +103,15 @@ class FinController(BaseController):
         """
 
         #TODO: Consider transaction currency
-        user_wallets = self._firebase_service.fetch_all(
+        user_wallet = self._firebase_service.fetch_one(
             model_class=Wallet,
             filters=[FieldFilter("user_id", "==", user_id), FieldFilter("currency", "==", "TON")]
         )
 
-        if not user_wallets:
+        if not user_wallet:
             raise Exception("User wallet not found")
         
-        from_wallet_id = user_wallets[0].id
+        from_wallet_id = user_wallet.id
         to_wallet_id = Settings().app_wallet_id
 
         self.__process_transaction(
@@ -190,6 +189,9 @@ class FinController(BaseController):
         :param description: A description for the transaction.
         :raises Exception: If either wallet is not found or if there are insufficient funds.
         """
+
+        print(from_wallet_id)
+        print(to_wallet_id)
         
         from_wallet = self._firebase_service.fetch_by_id(
             model_class=Wallet,

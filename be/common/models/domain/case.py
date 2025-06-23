@@ -1,8 +1,8 @@
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel
-from app.services.firebase.firebase_object import FirebaseObject
-from app.models.domain.gift import GiftType
+from common.services.firebase.firebase_object import FirebaseObject
+from common.models.domain.gift import GiftType
 
 class CaseOpeningStatus(str, Enum):
     NEW = "NEW"
@@ -34,6 +34,12 @@ class CaseOpening(FirebaseObject):
     gift_volume: int
     status: CaseOpeningStatus
     open_at: datetime
+
+    def gift_volumef(self) -> float:
+        """
+        Calculate the gift volume as a float.
+        """
+        return self.gift_volume / 100.0 if self.gift_volume else 0.0
 
     @staticmethod
     def collection_name():

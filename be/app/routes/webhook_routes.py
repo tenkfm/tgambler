@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.services.container import container
+from app.container import container
 from app.utils.wrappers import router_try_wrapper
 from app.models.network.fin.xtr_pre_checkout_update import XTRPreCheckoutUpdate, XTRSuccessfulPaymentRequest
-from app.models.domain.wallet import TopUpRequest, TopUpStatus, Currency
+from common.models.domain.wallet import TopUpRequest, TopUpStatus, Currency
+from common.models.domain.user import UserInfo
 from google.cloud.firestore_v1.base_query import FieldFilter
-from app.models.domain.user import UserInfo
 from app.settings import Settings
 import requests
 

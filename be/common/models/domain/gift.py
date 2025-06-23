@@ -1,5 +1,5 @@
 from enum import Enum
-from app.services.firebase.firebase_object import FirebaseObject
+from common.services.firebase.firebase_object import FirebaseObject
 
 class GiftType(str, Enum):
     GIFT = "GIFT"

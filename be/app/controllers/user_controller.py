@@ -3,10 +3,10 @@ from jose.exceptions import JWTError, ExpiredSignatureError
 from fastapi import HTTPException, Depends
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
-from app.models.domain.user import UserInfo, LaunchInfo
-from app.models.domain.wallet import Wallet, Currency
 from app.controllers.base_controller import BaseController
-from app.services.firebase.firebase_service import FirebaseService
+from common.services.firebase.firebase_service import FirebaseService
+from common.models.domain.user import UserInfo, LaunchInfo
+from common.models.domain.wallet import Wallet, Currency
 from app.settings import Settings
 
 class UserController(BaseController):

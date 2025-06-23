@@ -1,10 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
-from app.services.container import container
-from app.models.domain.gift import Gift
+from app.container import container
 from app.models.network.fin.wallet_topup_request import WalletTopupRequest
-from app.models.domain.wallet import Currency
 from app.models.network.fin.xtr_invoice import XTRInvoice
 from app.utils.wrappers import router_try_wrapper
+from common.models.domain.wallet import Currency
 
 fin_router = APIRouter(prefix="/api/fin", tags=["finances"])
 

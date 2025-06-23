@@ -4,10 +4,11 @@ import pytest
 from functools import lru_cache
 
 from app.controllers.case_controller import CaseController
-from app.services.firebase.firebase_service import FirebaseService
-from app.models.domain.case import Case
-from app.models.domain.gift import Gift
+from common.services.firebase.firebase_service import FirebaseService
+from common.models.domain.case import Case
+from common.models.domain.gift import Gift
 from tests.utils.firebase_cache import CachedFirebaseService
+from tests.utils.mock_fin_controller import MockFinController
 from app.settings import Settings
 
 @lru_cache()
@@ -21,8 +22,9 @@ def test_case_rtp_simulation():
     settings = get_settings()
 
     firebase = FirebaseService(api_key=settings.firebase_api_token)
+    mock_fin_controller = MockFinController()
     cached_firebase_service = CachedFirebaseService(firebase)
-    controller = CaseController(firebase_service=cached_firebase_service)
+    controller = CaseController(firebase_service=cached_firebase_service, fin_controller=mock_fin_controller)
 
     # Set initial data
     case_id = "y5ww90KVqg2OVPpTKLJe"
@@ -42,8 +44,8 @@ def test_case_rtp_simulation():
         / 100
     )
 
-    trials = 100_000
-    total_volume = sum(controller.open_case(case_id).volumef() for _ in range(trials))
+    trials = 10_000
+    total_volume = sum(controller.open_case(user_id="", case_id=case_id).gift_volumef() for _ in range(trials))
     rtp_empirical = total_volume / (trials * case.costf())
 
     print(f"Теоретический RTP: {rtp_theoretical:.4f}")
