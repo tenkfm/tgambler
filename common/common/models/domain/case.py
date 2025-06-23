@@ -45,8 +45,6 @@ class CaseOpening(FirebaseObject):
     def collection_name():
         return "case_openings"  # Firestore collection for User instances
 
-
-
 class CaseInfo(BaseModel):
     id: str
     name: str
