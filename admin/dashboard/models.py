@@ -1,0 +1,81 @@
+# admin/dashboard/models.py
+from django.db import models
+
+class UserInfoItem(models.Model):
+    id              = models.CharField(max_length=100, primary_key=True)
+    tg_id           = models.BigIntegerField()
+    username        = models.CharField(max_length=150)
+    first_name      = models.CharField(max_length=150)
+    last_name       = models.CharField(max_length=150, null=True, blank=True)
+    language_code   = models.CharField(max_length=10)
+    photo_url       = models.URLField(max_length=500)
+    is_premium      = models.BooleanField()
+    tgWebAppPlatform= models.CharField(max_length=100)
+    tgWebAppVersion = models.CharField(max_length=100)
+    auth_date       = models.DateTimeField()
+    chat_instance   = models.CharField(max_length=200)
+    signature       = models.CharField(max_length=255)
+    referral_id     = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        managed = True
+        verbose_name = "User Info"
+        verbose_name_plural = "User Infos"
+
+    def __str__(self):
+        return f"{self.username} ({self.tg_id})"
+
+class WalletItem(models.Model):
+    id           = models.CharField(max_length=100, primary_key=True)
+    user_id      = models.CharField(max_length=100)
+    balance      = models.BigIntegerField()
+    currency     = models.CharField(max_length=10)
+    last_updated = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        managed = True
+        db_table = 'dashboard_walletitem'
+        verbose_name = 'Wallet'
+        verbose_name_plural = 'Wallets'
+
+    def __str__(self):
+        return f'{self.user_id} [{self.currency}] : {self.balance}'
+
+class TransactionItem(models.Model):
+    id             = models.CharField(max_length=100, primary_key=True)
+    from_wallet_id = models.CharField(max_length=100)
+    to_wallet_id   = models.CharField(max_length=100)
+    amount         = models.BigIntegerField()
+    currency       = models.CharField(max_length=10)
+    timestamp      = models.DateTimeField()
+    description    = models.TextField()
+
+    class Meta:
+        managed = True
+        db_table = 'dashboard_transactionitem'
+        verbose_name = 'Transaction'
+        verbose_name_plural = 'Transactions'
+
+    def __str__(self):
+        return f'{self.from_wallet_id} → {self.to_wallet_id} : {self.amount}'
+
+class TopUpRequestItem(models.Model):
+    id          = models.CharField(max_length=100, primary_key=True)
+    user_id     = models.CharField(max_length=100)
+    amount      = models.BigIntegerField()
+    provider    = models.CharField(max_length=100)
+    currency    = models.CharField(max_length=10)
+    external_id = models.CharField(max_length=100)
+    status      = models.CharField(max_length=20)
+    payload     = models.TextField(null=True, blank=True)
+    info        = models.JSONField(null=True, blank=True)
+    created_at  = models.DateTimeField()
+
+    class Meta:
+        managed = True
+        db_table = 'dashboard_topuprequestitem'
+        verbose_name = 'Top-Up Request'
+        verbose_name_plural = 'Top-Up Requests'
+
+    def __str__(self):
+        return f'{self.user_id} : {self.amount} [{self.status}]'

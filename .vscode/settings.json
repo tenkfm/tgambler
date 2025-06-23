@@ -1,3 +1,7 @@
 {
-    "postman.settings.dotenv-detection-notification-visibility": false
+  "python.defaultInterpreterPath": "${workspaceFolder}/admin/.venv/bin/python",
+    "python.analysis.extraPaths": [
+    "${workspaceFolder}/common",
+    "${workspaceFolder}/admin"
+  ]
 }
