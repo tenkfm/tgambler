@@ -196,9 +196,13 @@ class FirebaseService(FirebaseServiceInterface):
         obj: FirebaseObject
     ) -> str:
         """
-        Добавляет объект obj в подколлекцию obj.collection_name()
-        документа parent_collection/parent_id и возвращает ID созданного документа.
+        Add an object to a subcollection of a parent document in Firestore.
+        :param parent_collection: The parent collection class where the subcollection exists.
+        :param parent_id: The ID of the parent document.
+        :param obj: The object to be added to the subcollection.
+        :return: The document ID of the added object in the subcollection.
         """
+        
         try:
             parent_ref = self.db.collection(parent_collection.collection_name()).document(parent_id)
             subcol_ref = parent_ref.collection(obj.collection_name())
@@ -209,6 +213,51 @@ class FirebaseService(FirebaseServiceInterface):
                 f"Adding subcollection failure {obj.collection_name()} "
                 f"document {parent_collection.collection_name()}/{parent_id}: {e}"
             )
+        
+        
+    def batch_add(self, objs: List[FirebaseObject]) -> List[FirebaseObject]:
+        """
+        Add multiple objects to Firestore in a batch operation.
+        
+        :param objs: List of FirebaseObject instances to add.
+        :return: List of FirebaseObject instances with assigned document IDs.
+        """
+        try:
+            batch = self.db.batch()
+            updated_objs = []
+            for obj in objs:
+                collection_ref = self.db.collection(obj.collection_name())
+                doc_ref = collection_ref.document()  # auto-generated ID
+                batch.set(doc_ref, obj.model_dump(exclude_unset=True))
+                obj.id = doc_ref.id  # Assign the generated ID to the object
+                updated_objs.append(obj)
+            batch.commit()
+            return updated_objs  # Return the list of objects with assigned IDs
+        except Exception as e:
+            raise FirebaseServiceException(f"Batch add failed: {str(e)}")
+
+    def batch_update(self, objs: List[FirebaseObject]) -> List[FirebaseObject]:
+        """
+        Update multiple documents in Firestore using a batch operation.
+        Each object must have an 'id' field set.
+
+        :param objs: List of FirebaseObject instances to update.
+        :return: List of updated FirebaseObject instances.
+        """
+        try:
+            batch = self.db.batch()
+            updated_objs = []
+            for obj in objs:
+                if not obj.id:
+                    raise FirebaseServiceException("Each object must have an ID for batch update.")
+                doc_ref = self.db.collection(obj.collection_name()).document(obj.id)
+                batch.set(doc_ref, obj.model_dump(exclude_unset=True), merge=True)
+                updated_objs.append(obj)  # Add the updated object to the list
+            batch.commit()
+            return updated_objs  # Return the list of updated objects
+        except Exception as e:
+            raise FirebaseServiceException(f"Batch update failed: {str(e)}")
+
         
     def close_db(self):
         """
