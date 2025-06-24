@@ -257,7 +257,31 @@ class FirebaseService(FirebaseServiceInterface):
             return updated_objs  # Return the list of updated objects
         except Exception as e:
             raise FirebaseServiceException(f"Batch update failed: {str(e)}")
+        
+    def batch_delete(self, model_class: Type[FirebaseObject], doc_ids: List[str]) -> None:
+        """
+        Delete multiple documents in Firestore using a batch operation.
+        
+        :param model_class: The class corresponding to the collection where documents are located.
+        :param doc_ids: List of document IDs to be deleted.
+        :return: None.
+        """
+        try:
+            # Start a batch operation
+            batch = self.db.batch()
+            
+            for doc_id in doc_ids:
+                # Get a reference to the document
+                doc_ref = self.db.collection(model_class.collection_name()).document(doc_id)
+                # Delete the document by adding it to the batch
+                batch.delete(doc_ref)
+            
+            # Commit the batch operation
+            batch.commit()
+            print(f"Successfully deleted {len(doc_ids)} documents.")
 
+        except Exception as e:
+            raise FirebaseServiceException(f"Batch delete failed: {str(e)}")
         
     def close_db(self):
         """
