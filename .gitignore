@@ -5,6 +5,7 @@ node_modules
 __pycache__/
 .env
 service-account.json
+common/build/
 
 # Ignore SQLite DB
 *.sqlite3
