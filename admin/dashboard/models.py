@@ -19,7 +19,7 @@ class UserInfoItem(models.Model):
     class Meta:
         managed = True
         verbose_name = "User Info"
-        verbose_name_plural = "User Infos"
+        verbose_name_plural = "Users"
 
     def __str__(self):
         return f"{self.username} ({self.tg_id})"

@@ -1,12 +1,11 @@
 import sys
 import requests
 from pathlib import Path
-from app.settings import Settings
+from settings import Settings
 from common.services.firebase.firebase_service import FirebaseService
 from common.models.domain.wallet import Wallet
-from app.container import container
+from container import container
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 def application_setup():
     """
