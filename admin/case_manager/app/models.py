@@ -1,6 +1,8 @@
 # app/wrappers.py
 
-from typing import Any, Type, List, Dict, Optional, get_type_hints
+from django.shortcuts import redirect
+from typing import Any, Type, List, Dict, Optional, get_type_hints, Callable
+from enum import Enum
 from datetime import datetime
 from django import forms
 from django.utils.safestring import mark_safe
@@ -15,7 +17,6 @@ class MyForm(forms.Form):
         html = html.replace('<p>', '<div class="form-group">')
         html = html.replace('</p>', '</div>')
         return mark_safe(html)
-
 
 class ModelWrapper:
     def __init__(
@@ -87,3 +88,104 @@ class ModelWrapper:
             row = [ serialized[col['name']] for col in cols ]
             rows.append(row)
         return rows
+
+
+FIELD_WIDGET = {
+    forms.CharField:     forms.TextInput,
+    forms.IntegerField:  forms.NumberInput,
+    forms.BooleanField:  forms.CheckboxInput,
+    forms.DateTimeField: forms.DateTimeInput,
+}
+
+def build_form_class(
+    wrapper: ModelWrapper,
+    *,
+    required_fields: Optional[List[str]] = None,
+    optional_fields: Optional[List[str]] = None,
+    readonly_fields: Optional[List[str]] = None
+) -> Type[MyForm]:
+    """
+    Генерирует класс формы на основе метаданных из wrapper,
+    автоматически превращая Enum-поля в ChoiceField.
+    """
+    readonly_fields = set(readonly_fields or [])
+    attrs: Dict[str, forms.Field] = {}
+    # Получаем аннотации, чтобы определить Enum-поля
+    hints = get_type_hints(wrapper.model_cls)
+
+    for f in wrapper.fields:
+        name = f['name']
+        field_type = hints.get(name)
+        FieldCls = f['form_field']
+
+        # 1) Обработка Enum-поля
+        if isinstance(field_type, type) and issubclass(field_type, Enum):
+            # Список кортежей (value, label)
+            choices = [(e.value, e.value) for e in field_type]
+            field = forms.ChoiceField(
+                label    = f.get('label', name.title()),
+                choices  = choices,
+                required = True if required_fields is None else (name in required_fields),
+                widget   = forms.Select(
+                              attrs={'class': 'form-control'}
+                           )
+            )
+            # initial — если есть дефолт в модели (Enum instance), то его .value
+            default = getattr(wrapper.model_cls, name, None)
+            if isinstance(default, Enum):
+                field.initial = default.value
+            attrs[name] = field
+            continue
+
+        # 2) Обычные поля
+        WidgetCls = FIELD_WIDGET.get(FieldCls, forms.TextInput)
+        widget_attrs = {'class': 'form-control'}
+        if name in (readonly_fields or []):
+            widget_attrs['readonly'] = 'readonly'
+
+        widget = WidgetCls(attrs=widget_attrs)
+
+        # required
+        if required_fields is not None:
+            is_required = name in required_fields
+        elif optional_fields is not None:
+            is_required = name not in optional_fields
+        else:
+            is_required = f.get('required', True)
+
+        params: Dict[str, Any] = {
+            'label':    f.get('label', name.replace('_', ' ').title()),
+            'required': is_required,
+            'widget':   widget,
+        }
+        default = getattr(wrapper.model_cls, name, None)
+        if default is not None:
+            params['initial'] = default
+
+        attrs[name] = FieldCls(**params)
+
+    form_name = f"{wrapper.model_cls.__name__}Form"
+    return type(form_name, (MyForm,), attrs)
+
+def save_object_from_form(
+    form: forms.Form,
+    obj: Any,
+    readonly_fields: List[str],
+    save_fn: Callable[[Any], None],
+    success_redirect_name: str
+):
+    """
+    Если form.is_valid():
+      - обновляет obj всеми полями из cleaned_data, кроме readonly_fields
+      - вызывает save_fn(obj)
+      - возвращает HttpResponseRedirect на success_redirect_name
+    Иначе возвращает None.
+    """
+    if form.is_valid():
+        for name, val in form.cleaned_data.items():
+            if name in readonly_fields:
+                continue
+            setattr(obj, name, val)
+        save_fn(obj)
+        return redirect(success_redirect_name)
+    return None

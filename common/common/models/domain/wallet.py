@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from common.services.firebase.firebase_object import FirebaseObject
 
 class Currency(str, Enum):
@@ -24,6 +24,18 @@ class Wallet(FirebaseObject):
     @staticmethod
     def collection_name():
         return "wallets"
+    
+    @field_validator('currency', mode='before')
+    def _normalize_currency(cls, v):
+        """
+        Если из Firestore пришло "Currency.COIN", обрезаем префикс.
+        Иначе передаём значение дальше (Pydantic сам сконвертирует
+        строку 'COIN' в Currency.COIN).
+        """
+        if isinstance(v, str) and v.startswith(f"{Currency.__name__}."):
+            # "Currency.COIN" → "COIN"
+            return v.split(".", 1)[1]
+        return v
 
 class Transaction(FirebaseObject):
     from_wallet_id: str  # ID of the wallet initiating the transaction

@@ -1,44 +1,17 @@
-from django.shortcuts import render
-from django import forms
+from django.shortcuts import render, redirect
 from .models import ModelWrapper
-from typing import Type, List, Dict, Any
 from .container import container
+from enum import Enum
 from common.models.domain.user import UserInfo
-from .models import MyForm
-
-FIELD_WIDGET = {
-    forms.CharField:        forms.TextInput,
-    forms.IntegerField:     forms.NumberInput,
-    forms.BooleanField:     forms.CheckboxInput,
-    forms.DateTimeField:    forms.DateTimeInput,
-}
-
-def build_form_class(wrapper: ModelWrapper) -> Type[MyForm]:
-    attrs: Dict[str, forms.Field] = {}
-    for f in wrapper.fields:
-        FieldCls = f['form_field']
-        # выбираем свой виджет (или TextInput по умолчанию)
-        WidgetCls = FIELD_WIDGET.get(FieldCls, forms.TextInput)
-        widget = WidgetCls(attrs={'class': 'form-control'})
-
-        params: Dict[str, Any] = {
-            'label':    f.get('label', f['name'].replace('_', ' ').title()),
-            'required': f['required'],
-            'widget':   widget,
-        }
-        default = getattr(wrapper.model_cls, f['name'], None)
-        if default is not None:
-            params['initial'] = default
-
-        attrs[f['name']] = FieldCls(**params)
-
-    form_name = wrapper.model_cls.__name__ + 'Form'
-    return type(form_name, (MyForm,), attrs)
-
+from common.models.domain.wallet import Wallet
+from .models import build_form_class, save_object_from_form
 
 def home(request):
     return render(request, "app/home.html")
 
+#
+# Users
+#
 def users(request):
     users = container.firebase_service.fetch_all(UserInfo)
     wrapper = ModelWrapper(
@@ -54,27 +27,83 @@ def users(request):
 
 def user(request, id):
     uw = ModelWrapper(UserInfo)
-    userInfoForm = build_form_class(uw)
+    UserForm = build_form_class(
+        uw,
+        required_fields=['username', 'first_name'],
+        readonly_fields=['tg_id', 'id', 'username']
+        )
     user = container.firebase_service.fetch_by_id(UserInfo, id)
 
     if request.method == 'POST':
-        # form = userInfoForm(request.POST)
-        # if form.is_valid():
-        #     data = form.cleaned_data
-        #     # применяем данные обратно в obj и сохраняем
-        #     for k, v in data.items():
-        #         setattr(user, k, v)
-        #     user.save()
-        #     return redirect('case_list')
-        print("POST request received")
+        form = UserForm(request.POST)
+        response = save_object_from_form(
+            form=form,
+            obj=user,
+            readonly_fields=['tg_id', 'id', 'username'],
+            save_fn=lambda o: container.firebase_service.update(id=id, obj=o),
+            success_redirect_name='users'
+        )
+        if response:
+            return response
+        return render(request, "app/user.html", {'form': form})
     else:
         # заполняем начальные значения из obj
         init = {
             field['name']: getattr(user, field['name']) for field in uw.fields
         }
-        form = userInfoForm(initial=init)
+        form = UserForm(initial=init)
 
     return render(request, "app/user.html", {'form': form})
+
+
+#
+# Wallets
+#
+def wallets(request):
+    objs = container.firebase_service.fetch_all(Wallet)
+    wrapper = ModelWrapper(
+        Wallet
+    )
+    cols = wrapper.get_table_columns()
+    rows = wrapper.get_table_data(objs)
+    return render(request, 'app/wallets.html', {
+        'columns': cols,
+        'rows': rows,
+    })
+
+def wallet(request, id):
+    uw = ModelWrapper(Wallet)
+    WalletForm = build_form_class(
+        uw,
+        readonly_fields=['id']
+    )
+    obj = container.firebase_service.fetch_by_id(Wallet, id)
+
+    if request.method == 'POST':
+        form = WalletForm(request.POST)
+        response = save_object_from_form(
+            form=form,
+            obj=obj,
+            readonly_fields=['id'],
+            save_fn=lambda o: container.firebase_service.update(id=id, obj=o),
+            success_redirect_name='wallets'
+        )
+        if response:
+            return response
+        return render(request, "app/wallet.html", {'form': form})
+    else:
+        init = {}
+        for f in uw.fields:
+            name = f['name']
+            val = getattr(obj, name)
+            # если это Enum, используем его .value, иначе сам val
+            if isinstance(val, Enum):
+                init[name] = val.value
+            else:
+                init[name] = val
+        form = WalletForm(initial=init)
+    return render(request, "app/wallet.html", {'form': form})
+
 
 
 def cases(request):
