@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta content="ie=edge" http-equiv="x-ua-compatible">
+    <meta content="" name="keywords">
+    <meta content="Anton Rogachevskyi" name="author">
+    <meta content="" name="description">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet" type="text/css">
+    <link href="{% static 'bower_components/select2/dist/css/select2.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/bootstrap-daterangepicker/daterangepicker.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/dropzone/dist/dropzone.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/fullcalendar/dist/fullcalendar.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/perfect-scrollbar/css/perfect-scrollbar.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bower_components/slick-carousel/slick/slick.css' %}" rel="stylesheet">
+
+    <title>{% block title %}Case Manager{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+
+<body class="menu-position-side menu-side-left full-screen with-content-panel">
+    <div class="all-wrapper with-side-panel solid-bg-all">
+      <div class="layout-w">
+        <!--------------------
+        START - Main Menu
+        -------------------->
+        <div class="menu-w color-scheme-light color-style-transparent menu-position-side menu-side-left menu-layout-compact sub-menu-style-over sub-menu-color-bright selected-menu-color-light menu-activated-on-hover menu-has-selected-link">
+          
+          <div class="logo-w">
+            <a class="logo" href="/">
+              <div class="logo-element"></div>
+              <div class="logo-label">
+                Rolls Admin
+              </div>
+            </a>
+          </div>
+          <ul class="main-menu">
+            <li class="selected">
+              <a href="/">
+                <div class="icon-w">
+                  <div class="os-icon os-icon-layout"></div>
+                </div>
+                <span>Dashboard</span></a>
+            </li>
+            <li class="sub-header">
+              <span>Cases</span>
+            </li>
+            <li class="selected">
+              <a href="/cases">
+                <div class="icon-w">
+                  <div class="os-icon os-icon-layout"></div>
+                </div>
+                <span>Cases</span></a>
+            </li>
+
+
+            <li class="sub-header">
+              <span>Management</span>
+            </li>
+            <li class="">
+              <a href="/users">
+                <div class="icon-w">
+                  <div class="os-icon os-icon-users"></div>
+                </div>
+                <span>Users</span></a>
+            </li>
+          </ul>
+        </div>
+        <!--------------------
+        END - Main Menu
+        -------------------->
+        <div class="content-w">
+          <div class="content-i">
+            <div class="content-box">
+              {% block content %}{% endblock %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="display-type"></div>
+    </div>
+    <script src="{% static 'bower_components/jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'bower_components/popper.js/dist/umd/popper.min.js' %}"></script>
+    <script src="{% static 'bower_components/moment/moment.js' %}"></script>
+    <script src="{% static 'bower_components/chart.js/dist/Chart.min.js' %}"></script>
+    <script src="{% static 'bower_components/select2/dist/js/select2.full.min.js' %}"></script>
+    <script src="{% static 'bower_components/jquery-bar-rating/dist/jquery.barrating.min.js' %}"></script>
+    <script src="{% static 'bower_components/ckeditor/ckeditor.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap-validator/dist/validator.min.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+    <script src="{% static 'bower_components/ion.rangeSlider/js/ion.rangeSlider.min.js' %}"></script>
+    <script src="{% static 'bower_components/dropzone/dist/dropzone.js' %}"></script>
+    <script src="{% static 'bower_components/editable-table/mindmup-editabletable.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+    <script src="{% static 'bower_components/fullcalendar/dist/fullcalendar.min.js' %}"></script>
+    <script src="{% static 'bower_components/perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
+    <script src="{% static 'bower_components/tether/dist/js/tether.min.js' %}"></script>
+    <script src="{% static 'bower_components/slick-carousel/slick/slick.min.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/util.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/alert.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/button.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/carousel.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/collapse.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/dropdown.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/modal.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/tab.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/tooltip.js' %}"></script>
+    <script src="{% static 'bower_components/bootstrap/js/dist/popover.js' %}"></script>
+    <script src="{% static 'js/demo_customizer.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+  </body>
+</html>
+
