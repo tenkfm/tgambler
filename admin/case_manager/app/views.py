@@ -3,7 +3,8 @@ from .models import ModelWrapper
 from .container import container
 from enum import Enum
 from common.models.domain.user import UserInfo
-from common.models.domain.wallet import Wallet
+from common.models.domain.wallet import Wallet, Transaction, TopUpRequest
+from common.models.domain.case import CaseOpening
 from .models import build_form_class, save_object_from_form
 
 def home(request):
@@ -75,7 +76,8 @@ def wallet(request, id):
     uw = ModelWrapper(Wallet)
     WalletForm = build_form_class(
         uw,
-        readonly_fields=['id']
+        readonly_fields=['id'],
+        required_fields=['id'],
     )
     obj = container.firebase_service.fetch_by_id(Wallet, id)
 
@@ -104,6 +106,157 @@ def wallet(request, id):
         form = WalletForm(initial=init)
     return render(request, "app/wallet.html", {'form': form})
 
+
+#
+# Transactions
+#
+def transactions(request):
+    objs = container.firebase_service.fetch_all(Transaction)
+    wrapper = ModelWrapper(
+        Transaction,
+        include_fields=['id', 'from_wallet_id', 'to_wallet_id', 'amount', 'currency']
+    )
+    cols = wrapper.get_table_columns()
+    rows = wrapper.get_table_data(objs)
+    return render(request, 'app/transactions.html', {
+        'columns': cols,
+        'rows': rows,
+    })
+
+def transaction(request, id):
+    uw = ModelWrapper(Transaction)
+    WalletForm = build_form_class(
+        uw,
+        readonly_fields=['id'],
+        required_fields=['id'],
+    )
+    obj = container.firebase_service.fetch_by_id(Transaction, id)
+
+    if request.method == 'POST':
+        form = WalletForm(request.POST)
+        response = save_object_from_form(
+            form=form,
+            obj=obj,
+            readonly_fields=['id'],
+            save_fn=lambda o: container.firebase_service.update(id=id, obj=o),
+            success_redirect_name='transactions'
+        )
+        if response:
+            return response
+        return render(request, "app/transaction.html", {'form': form})
+    else:
+        init = {}
+        for f in uw.fields:
+            name = f['name']
+            val = getattr(obj, name)
+            # если это Enum, используем его .value, иначе сам val
+            if isinstance(val, Enum):
+                init[name] = val.value
+            else:
+                init[name] = val
+        form = WalletForm(initial=init)
+    return render(request, "app/transaction.html", {'form': form})
+
+
+#
+# Topup Requests
+#
+def topup_requests(request):
+    objs = container.firebase_service.fetch_all(TopUpRequest)
+    wrapper = ModelWrapper(
+        TopUpRequest,
+        include_fields=['id', 'user_id', 'amount', 'provider', 'external_id', 'status']
+    )
+    cols = wrapper.get_table_columns()
+    rows = wrapper.get_table_data(objs)
+    return render(request, 'app/topup_requests.html', {
+        'columns': cols,
+        'rows': rows,
+    })
+
+def topup_request(request, id):
+    uw = ModelWrapper(TopUpRequest)
+    WalletForm = build_form_class(
+        uw,
+        readonly_fields=['id'],
+        required_fields=['id'],
+    )
+    obj = container.firebase_service.fetch_by_id(TopUpRequest, id)
+
+    if request.method == 'POST':
+        form = WalletForm(request.POST)
+        response = save_object_from_form(
+            form=form,
+            obj=obj,
+            readonly_fields=['id'],
+            save_fn=lambda o: container.firebase_service.update(id=id, obj=o),
+            success_redirect_name='topup_requests'
+        )
+        if response:
+            return response
+        return render(request, "app/topup_request.html", {'form': form})
+    else:
+        init = {}
+        for f in uw.fields:
+            name = f['name']
+            val = getattr(obj, name)
+            # если это Enum, используем его .value, иначе сам val
+            if isinstance(val, Enum):
+                init[name] = val.value
+            else:
+                init[name] = val
+        form = WalletForm(initial=init)
+    return render(request, "app/topup_request.html", {'form': form})
+
+
+#
+# Case Openings
+#
+def case_openings(request):
+    objs = container.firebase_service.fetch_all(CaseOpening)
+    wrapper = ModelWrapper(
+        CaseOpening
+    )
+    cols = wrapper.get_table_columns()
+    rows = wrapper.get_table_data(objs)
+    return render(request, 'app/case_openings.html', {
+        'columns': cols,
+        'rows': rows,
+    })
+
+def case_opening(request, id):
+    uw = ModelWrapper(CaseOpening)
+    WalletForm = build_form_class(
+        uw,
+        readonly_fields=['id'],
+        required_fields=['id'],
+    )
+    obj = container.firebase_service.fetch_by_id(CaseOpening, id)
+
+    if request.method == 'POST':
+        form = WalletForm(request.POST)
+        response = save_object_from_form(
+            form=form,
+            obj=obj,
+            readonly_fields=['id'],
+            save_fn=lambda o: container.firebase_service.update(id=id, obj=o),
+            success_redirect_name='case_openings'
+        )
+        if response:
+            return response
+        return render(request, "app/case_opening.html", {'form': form})
+    else:
+        init = {}
+        for f in uw.fields:
+            name = f['name']
+            val = getattr(obj, name)
+            # если это Enum, используем его .value, иначе сам val
+            if isinstance(val, Enum):
+                init[name] = val.value
+            else:
+                init[name] = val
+        form = WalletForm(initial=init)
+    return render(request, "app/case_opening.html", {'form': form})
 
 
 def cases(request):

@@ -5,7 +5,7 @@
 <div class="element-wrapper">
   <div class="element-box">
     <h5 class="form-header">
-      Wallets
+      Case Openings
     </h5>
     <div class="table-responsive">
       <!--------------------
@@ -25,7 +25,7 @@
                 {% for cell in row %}
                     {% if forloop.first %}
                         <td>
-                            <a href="{% url 'wallet' cell %}">
+                            <a href="{% url 'case_opening' cell %}">
                             {{ cell }}
                             </a>
                         </td>

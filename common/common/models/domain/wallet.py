@@ -33,7 +33,6 @@ class Wallet(FirebaseObject):
         строку 'COIN' в Currency.COIN).
         """
         if isinstance(v, str) and v.startswith(f"{Currency.__name__}."):
-            # "Currency.COIN" → "COIN"
             return v.split(".", 1)[1]
         return v
 
@@ -48,6 +47,12 @@ class Transaction(FirebaseObject):
     @staticmethod
     def collection_name():
         return "transactions"
+    
+    @field_validator('currency', mode='before')
+    def _normalize_currency(cls, v):
+        if isinstance(v, str) and v.startswith(f"{Currency.__name__}."):
+            return v.split(".", 1)[1]
+        return v
 
 class TopUpRequest(FirebaseObject):
     user_id: str

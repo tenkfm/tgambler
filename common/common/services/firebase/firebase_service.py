@@ -100,7 +100,7 @@ class FirebaseService(FirebaseServiceInterface):
             # Apply the filter if provided
             if filters:
                 filtered = collection_ref
-                for filter in filters:        
+                for filter in filters:
                     filtered = filtered.where(filter=filter)
                 documents = filtered.stream()
             else:
