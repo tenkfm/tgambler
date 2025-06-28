@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% load static %}
+{% load math_filters %}
+{% block content %}
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="element-wrapper">
+      <div class="element-box">
+          <h5 class="form-header">
+            {{case.name}} - gifts
+          </h5>
+          <div class="form-desc">
+            Gifts that are currently available for the case.
+          </div>
+
+          <div class="form-group row">
+            <label class="col-form-label col-sm-3" for="">Цена: </label>
+            <div class="col-sm-8">
+              <label class="col-form-label" for="">
+                <div style="display: flex; align-items:center;">
+                  {{ case.costf }}
+                  <img alt=""src="{% static 'img/ton_symbol.png' %}" style="margin-left: 8px;" width="16px">
+                </div>
+              </label>
+            </div>
+
+            <label class="col-form-label col-sm-3" for="">Общая вероятность: </label>
+            <div class="col-sm-8">
+              {% if total_prob == 10000 %}
+              <label class="col-form-label" style="color:#24b314" for="">{{total_prob|div:100}} %</label>
+              {% else %}
+              <label class="col-form-label" style="color:#e65252" for="">{{total_prob|div:100}} %</label>
+              {% endif %}
+            </div>
+
+            <label class="col-form-label col-sm-3" for="">Теоретическое RTP: </label>
+            <div class="col-sm-8">
+              {% if rtp < 90 %}
+              <label class="col-form-label" style="color:#24b314" for="">{{rtp}} %</label>
+              {% else %}
+              <label class="col-form-label" style="color:#e65252" for="">{{rtp}} %</label>
+              {% endif %}
+            </div>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+              <div class="col-sm-6">
+                <div class="form-group">
+                  <input class="form-control" name="desired_rtp" value="{{desired_rtp}}" placeholder="Desired RTP">
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="form-group">
+                  <button class="btn btn-primary" type="submit" name="set_linear_prob">Exponential Probs</button>
+                </div>
+              </div>
+            </div>
+
+          </form>
+
+          <div class="table-responsive">
+            <table class="table table-lightborder">
+              <thead>
+                <tr>
+                  <th>
+                    ID
+                  </th>
+                  <th>
+                    Name
+                  </th>
+                  <th class="text-center">
+                    Image
+                  </th>
+                  <th class="text-right">
+                    Prob (int)
+                  </th>
+                  <th class="text-right">
+                    Volume
+                  </th>
+                  <th class="text-center">
+                    Is Active
+                  </th>
+                  <th class="text-center">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for case_gift in case_gifts %}
+                <tr>
+                  <td class="nowrap">
+                    {{ case_gift.id }}
+                  </td>
+                  <td>
+                    {{ case_gift.name }}
+                  </td>
+                  <td class="text-center">
+                    <img alt="" src="{{ case_gift.payload.photo_url }}" width="50px" style="border-radius: 8px;">
+                  </td>
+                  <td class="text-right">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="change_prob" value="true">
+                        <input name="external_collection_number" value="{{external_collection_number}}" type="hidden">
+                        <input name="gift_id" value="{{case_gift.id}}" type="hidden">
+                        <input class="form-control" name="prob" value="{{case_gift.prob}}" placeholder="Probability">
+                      </form>
+                  </td>
+                  <td class="text-right">
+                    <div style="display: flex; align-items:center;">
+                        {{ case_gift.volumef }}
+                      <img alt=""src="{% static 'img/ton_symbol.png' %}" style="margin-left: 4px;" width="16px">
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="change_is_active" value="true">
+                      <input name="external_collection_number" value="{{external_collection_number}}" type="hidden">
+                      <input name="gift_id" value="{{case_gift.id}}" type="hidden">
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        value="true"
+                        {% if case_gift.is_active %}checked{% endif %}
+                        onchange="this.form.submit()"
+                      >
+                    </form>
+                  </td>
+                  <td class="row-actions text-center">
+                    <div class="danger">
+                      <form method="post">
+                        {% csrf_token %}
+                        <input name="external_collection_number" value="{{external_collection_number}}" type="hidden">
+                        <input type="hidden" name="delete_gift_id" value="{{case_gift.id}}">
+                        <button class="btn btn-danger" type="submit" name="delete_gift" value="{{case_gift.id}}"><i class="os-icon os-icon-ui-15"></i></button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="element-wrapper">
+
+      <div class="element-box">
+          <h5 class="form-header">
+            Ton Rewards
+          </h5>
+          <div class="form-desc">
+            Add Ton Rewards to the case
+          </div>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group row">
+              <label class="col-form-label col-sm-4" for="">Name: </label>
+              <div class="col-sm-8">
+                <input class="form-control" name="ton_reward_name" placeholder="100 Ton">
+              </div>
+            </div>
+
+            <div class="form-group row">
+              <label class="col-form-label col-sm-4" for="">Volume (cents): </label>
+              <div class="col-sm-8">
+                <input class="form-control" name="ton_reward_volume_cents" placeholder="10000" type="number">
+              </div>
+            </div>
+
+            <div class="form-group row">
+              <label class="col-form-label col-sm-4" for="">Image Url: </label>
+              <div class="col-sm-8">
+                <input class="form-control" name="ton_reward_image_url" placeholder="https://example.com/image.png">
+              </div>
+            </div>
+
+            <div>
+              <button class="btn btn-primary" type="submit" name="add_ton">Set Ton Reward</button>
+            </div>
+        </form>
+      </div>
+
+      
+      <div class="element-box">
+          <h5 class="form-header">
+            Portals Gifts
+          </h5>
+          <div class="form-desc">
+            Find Portals gifts that you want to add to the case by it's group ID
+          </div>
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group row">
+              <label class="col-form-label col-sm-4" for="">Gift ID: </label>
+              <div class="col-sm-8">
+                <input class="form-control" name="external_collection_number" value="{{external_collection_number}}" placeholder="1144">
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-primary" type="submit">Load gifts</button>
+            </div>
+        </form>
+
+
+        {% if portals_gifts %}
+        <div class="element-wrapper compact pt-4">
+          <h6 class="element-header">
+            Portals Gifts
+          </h6>
+          <div class="element-box-tp">
+            <div class="inline-profile-tiles">
+              <div class="row">
+
+                {% for portals_gift in portals_gifts %}
+
+                  <div class="col-4 col-sm-3 col-xxl-3">
+                    <div class="profile-tile profile-tile-inlined">
+                      <div class="profile-tile-box">
+                        <div class="">
+                          <img alt="" src="{{portals_gift.photo_url}}" width="100%" style="border-radius: 8px;">
+                        </div>
+                        <div class="pt-user-name">
+                          <div>{{portals_gift.name}}</div>
+                          <div style="font-size: 9pt; margin-top: 8px; color:gray">#{{portals_gift.external_collection_number}}</div>
+                          <div style="display: flex; justify-content: center; align-items:center; margin-top: 8px; margin-bottom: 8px;">
+                            <img alt=""src="{% static 'img/ton_symbol.png' %}" style="margin-right: 4px;" width="16px">
+                            {{portals_gift.price}}
+                          </div>
+                        </div>
+                        <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="add_gift" value="true">
+                          <input name="external_collection_number" value="{{external_collection_number}}" type="hidden">
+                          <input name="gift_portals_id" value="{{portals_gift.id}}" type="hidden">
+                          <button class="btn btn-primary" type="submit" name="add_gift">Add to case</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                
+                {% endfor %}
+                
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="element-wrapper">
+      <h6 class="element-header">
+        Case Gifts
+      </h6>
+    </div>
+    <div class="element-box">
+      <form method="post">
+        <h5 class="form-header">
+          ID - {{ form.initial.id }}
+        </h5>
+
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <div class="form-buttons-w">
+          <button class="btn btn-primary" type="submit"> Submit</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div> -->
+
+{% endblock %}

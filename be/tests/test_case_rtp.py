@@ -39,7 +39,7 @@ def test_case_rtp_simulation():
 
     cost_float = case.costf()
     rtp_theoretical = (
-        sum(g.probf() * g.volumef() for g in gifts)
+        sum(g.probf * g.volumef for g in gifts)
         / cost_float
         / 100
     )

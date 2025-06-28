@@ -19,6 +19,7 @@ class Case(FirebaseObject):
     def collection_name():
         return "cases"  # Firestore collection for User instances
     
+    @property
     def costf(self) -> float:
         """
         Calculate the cost as a float.
@@ -35,6 +36,7 @@ class CaseOpening(FirebaseObject):
     status: CaseOpeningStatus
     open_at: datetime
 
+    @property
     def gift_volumef(self) -> float:
         """
         Calculate the gift volume as a float.

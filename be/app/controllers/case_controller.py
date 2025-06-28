@@ -137,7 +137,7 @@ class CaseController(BaseController):
             return case_info
         
         # RTP
-        sum = reduce(lambda acc, gift: acc + (gift.probf() * gift.volumef()), gifts, 0)
+        sum = reduce(lambda acc, gift: acc + (gift.probf * gift.volumef), gifts, 0)
         rtp = sum / case.costf() / 100
         case_info.rtp = round(rtp, 3)
 
