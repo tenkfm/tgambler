@@ -452,7 +452,7 @@ def __add_ton_to_case(id: str, ton_reward_name: str, ton_reward_volume_cents: in
     payload = TONReward(
         id=str(uuid.uuid4()),
         name=ton_reward_name,
-        volume=ton_reward_volume_cents / 100,  # Convert cents to integer
+        volume=ton_reward_volume_cents,
         photo_url=ton_reward_image_url
     )
 

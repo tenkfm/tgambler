@@ -69,6 +69,21 @@ class Gift(FirebaseObject):
         """
         return self.volume / 100.0 if self.volume else 0.0
     
+    def update_payload(self, payload: PortalsNFT | TONReward):
+        """
+        Update the payload of the gift.
+        :param payload: The new payload to set.
+        """
+        if isinstance(payload, (PortalsNFT)):
+            self.volume = float(payload.price) * 100
+            self.payload = payload
+            
+        elif isinstance(payload, TONReward):
+            self.volume = payload.volume
+            self.payload = payload
+        else:
+            raise ValueError("Payload must be an instance of PortalsNFT or TONReward.")
+    
     @staticmethod
     def collection_name():
         return "gifts"  # Firestore collection for User instances

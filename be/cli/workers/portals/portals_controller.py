@@ -1,16 +1,19 @@
 import requests
-import time
-from fastapi import HTTPException, Depends
+from collections import defaultdict
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 from google.cloud.firestore_v1.base_query import FieldFilter
 from common.services.firebase.firebase_service import FirebaseService
-from models import CollectionAPIResponse, NFTResponse, PortalsNFT, PortalsCollection
+from common.models.domain.gift import PortalsNFT, Gift, GiftType
+
+class NFTResponse(BaseModel):
+    results: List[PortalsNFT]
+    total_count: int
 
 class PortalsController:
-    portals_collections: list[PortalsCollection]
     __firebase_service: FirebaseService
 
     def __init__(self, firebase_service: FirebaseService):
-        self.portals_collections = []
         self.__firebase_service = firebase_service
 
     def __generate_headers(self, reffer: str):
@@ -34,215 +37,61 @@ class PortalsController:
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
     }
 
-    def __rename_id_to_underscore_id(self, data: list[dict]) -> list[dict]:
+
+    def fetch_gifts(self) -> List[Gift]:
+        gifts = self.__firebase_service.fetch_all(
+            model_class=Gift,
+            filters=[FieldFilter('type', '==', GiftType.PORTALS_GIFT)]
+        )
+
+        # Group gifts by external_collection_number
+        groups = defaultdict(list)
+        for gift in gifts:
+            key = getattr(gift.payload, 'external_collection_number', None)
+            groups[key].append(gift)
+
+        return groups
+
+
+    def portals_nfts_search(self, external_collection_number: str) -> List[PortalsNFT]:
         """
-        Renames the 'id' key to '_id' in all collections.
+        Fetches a single NFT by its portals_id from the Portals Market API.
         """
-        for collection in data:
-            # Для каждого словаря коллекции меняем ключ 'id' на '_id'
-            if 'id' in collection:
-                collection['portals_id'] = collection.pop('id')
-        return data
-    
-    def __load_portals_nfts(self, collection_id: str, offset: int = 0, limit: int = 100) -> list[PortalsNFT]:
-        """
-        Fetches NFTs from the Portals Market API for a given collection ID.
-        """
-        url = f"https://portals-market.com/api/nfts/search?offset={offset}&limit={limit}&collection_id={collection_id}"
-        headers = self.__generate_headers(reffer='https://portals-market.com/collection')
+
+        url = f"https://portals-market.com/api/nfts/search?offset=0&limit=100&external_collection_number={external_collection_number}&status=listed"
+        headers = self.__generate_headers(reffer='https://portals-market.com/')
 
         try:
+            print(f"🛜 Search NFTs for {external_collection_number} from Portals Market API...")
             response = requests.get(url, headers=headers)
             response.raise_for_status()
             data = response.json()
-
-            data['results'] = self.__rename_id_to_underscore_id(data['results'])
-
             api_response = NFTResponse(**data)
             return api_response.results
 
         except requests.exceptions.HTTPError as err:
-            raise Exception(f"❌ load_portals_nfts HTTP error occurred: {err}")
+            raise Exception(f"❌ fetch_portals_nfts_by_id HTTP error occurred: {err}")
         except requests.exceptions.RequestException as err:
-            raise Exception(f"❌ load_portals_nfts Request error occurred: {err}")
+            raise Exception(f"❌ fetch_portals_nfts_by_id Request error occurred: {err}")
         
-    #
-    # Collection methods
-    #
-
-    def fetch_portals_collections(self):
+    def update_gifts(self, gifts: List[Gift], nfts: List[PortalsNFT]):
         """
-        Fetches collections from the Portals Market API and returns them as a list of Collection objects.
+        Updates gifts with the provided NFTs.
         """
-        url = "https://portals-market.com/api/collections?limit=200"
-        headers = self.__generate_headers(reffer='https://portals-market.com/')
+        updated_gifts = []
+        for gift in gifts:
+            if not gift.payload or not isinstance(gift.payload, PortalsNFT):
+                print(f"❌ Gift {gift.id} has no valid payload.")
+                continue
+            
+            portals_nft = next((nft for nft in nfts if nft.external_collection_number == gift.payload.external_collection_number), None)
+            if not portals_nft:
+                print(f"❌ No matching NFT found for gift {gift.id} with external_collection_number {gift.payload.external_collection_number}.")
+                continue
+            
 
-        try:
-            print("🛜 Retrieving collections from Portals Market API...")
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-
-            data['collections'] = self.__rename_id_to_underscore_id(data['collections'])
-
-            api_response = CollectionAPIResponse(**data)
-
-            collections_found = len(api_response.collections)
-            print(f"ℹ Found {collections_found} collections.")
-
-            if collections_found == 0:
-                raise Exception("❌ No collections found.")
-
-            self.portals_collections = api_response.collections
-
-        except requests.exceptions.HTTPError as err:
-            raise Exception(f"❌ fetch_portals_collections HTTP error occurred: {err}")
-        except requests.exceptions.RequestException as err:
-            raise Exception(f"❌ fetch_portals_collections Request error occurred: {err}")
-
-    def update_remote_collections(self):
-        """
-        Saves the fetched collections to Firebase.
-        """
-        if not self.portals_collections or len(self.portals_collections) == 0:
-            print("❌ No collections to save.")
-            raise Exception("No collections to save.")
-
-        print("💽 Fetching collections from Firebase to merge with fetched collections.")        
-        firebase_collections = self.__firebase_service.fetch_all(PortalsCollection)
-
-        if not firebase_collections or len(firebase_collections) == 0:
-            # Add all collections to Firebase if none exist
-            print("✅ No collections found in Firebase, adding all fetched collections.")
-            self.__firebase_service.batch_add(objs=self.portals_collections)
-            return
+            gift.update_payload(payload=portals_nft)
+            updated_gifts.append(gift)
         
-        print("⛙ Merging fetched collections with Firebase collections.")
-        objects_to_add = []
-        objects_to_update = []
-        objects_ids_to_delete = []
-
-        # Convert firebase collections to a set of portals_ids for easy comparison
-        firebase_collections_ids = {col.portals_id for col in firebase_collections}
-        # Create a set of portals_ids from self.portals_collections
-        portals_collections_ids = {col.portals_id for col in self.portals_collections}
-        # Find collections to delete (those in Firebase but not in the current fetched collections)
-        collections_to_delete_ports_ids = firebase_collections_ids - portals_collections_ids
-
-        for portals_collection in self.portals_collections:
-            # Check if the collection already exists in Firebase
-            existing_collection = next(
-                (col for col in firebase_collections if col.portals_id == portals_collection.portals_id), None
-            )
-
-            if existing_collection:
-                # Update existing collection
-                existing_collection.merge(portals_collection)
-                objects_to_update.append(existing_collection)
-            else:
-                # Add new collection
-                objects_to_add.append(portals_collection)
-
-        # Add delete operation for collections that are in Firebase but not in portals_collections
-        for collection_id in collections_to_delete_ports_ids:
-            collection_to_delete = next(
-                (col for col in firebase_collections if col.portals_id == collection_id), None
-            )
-            if collection_to_delete:
-                objects_ids_to_delete.append(collection_to_delete.id)
-
-        print(f"💾 Starting batch update and add operations for collections.")
-        self.__firebase_service.batch_add(objs=objects_to_add)
-        self.__firebase_service.batch_update(objs=objects_to_update)
-        self.__firebase_service.batch_delete(model_class=PortalsCollection, doc_ids=objects_ids_to_delete)
-        print(f"✅ Added {len(objects_to_add)} new collections, updated {len(objects_to_update)} existing collections, and deleted {len(objects_ids_to_delete)} collections.")
-
-    #
-    # NFT methods
-    #
-
-    def fetch_portals_nfts(self, collection_id: str) -> list[PortalsNFT]:
-        """
-        Fetches NFTs for a given collection ID from the Portals Market API.
-        """
-
-        offset = 0
-        limit = 100
-        all_nfts = []
-
-        while True:
-            try:
-                print(f"🛜 Fetching NFTs for collection {collection_id} from Portals Market API...")
-                nfts = self.__load_portals_nfts(collection_id=collection_id, offset=offset, limit=limit)
-                if len(nfts) == 0:
-                    print("No more NFTs found.")
-                    break
-                
-                all_nfts.extend(nfts)
-                print(f"🧵 Fetched {len(nfts)} NFTs of collection {collection_id} from offset {offset}.")
-            except Exception as e:
-                print(f"❌ Error fetching NFTs: {e}")
-                break
-            offset += limit
-            time.sleep(3)
-
-        print(f"✅ Fetched {len(all_nfts)} NFTs of collection {collection_id}")
-        return all_nfts
-
-    def update_remote_nfts(self, collection_id: str, portals_nfts: list[PortalsNFT]):
-        """
-        Merges and updates NFTs in Firebase for a given collection ID.
-        """
-
-        if not portals_nfts or len(portals_nfts) == 0:
-            raise Exception("❌ No NFTs to sync.")
-
-        print("💽 Fetching NFTs from Firebase to merge with fetched NFTs.")
-        firebase_nfts = self.__firebase_service.fetch_all(
-            PortalsNFT,
-            filters=[FieldFilter("collection_id", "==", collection_id)]
-        )
-
-        if not firebase_nfts or len(firebase_nfts) == 0:
-            # Add all NFTs to Firebase if none exist
-            print("✅ No NFTs found in Firebase, adding all fetched NFTs.")
-            self.__firebase_service.batch_add(objs=portals_nfts)
-            return
-
-        print("⛙ Merging fetched NFTs with Firebase NFTs.")
-        objects_to_add = []
-        objects_to_update = []
-        objects_ids_to_delete = []
-
-        # Convert firebase collections to a set of portals_ids for easy comparison
-        firebase_nfts_ids = {col.portals_id for col in firebase_nfts}
-        portals_nfts_ids = {col.portals_id for col in portals_nfts}
-        nfts_to_delete_ports_ids = firebase_nfts_ids - portals_nfts_ids
-
-        for portals_nft in portals_nfts:
-            # Check if the NFT already exists in Firebase
-            existing_nft = next(
-                (nft for nft in firebase_nfts if nft.portals_id == portals_nft.portals_id), None
-            )
-
-            if existing_nft:
-                # Update existing NFT
-                existing_nft.merge(portals_nft)
-                objects_to_update.append(existing_nft)
-            else:
-                # Add new NFT
-                objects_to_add.append(portals_nft)
-
-        # Add delete operation for nfts that are in Firebase but not in portals_nfts
-        for nft_id in nfts_to_delete_ports_ids:
-            nft_to_delete = next(
-                (col for col in firebase_nfts if col.portals_id == nft_id), None
-            )
-            if nft_to_delete:
-                objects_ids_to_delete.append(nft_to_delete.id)
-
-        print(f"💾 Starting batch update and add operations for NFTs.")
-        self.__firebase_service.batch_add(objs=objects_to_add)
-        self.__firebase_service.batch_update(objs=objects_to_update)
-        self.__firebase_service.batch_delete(model_class=PortalsNFT, doc_ids=objects_ids_to_delete)
-        print(f"✅ Added {len(objects_to_add)} new nfts, updated {len(objects_to_update)} existing nfts, and deleted {len(objects_ids_to_delete)} collections.")
+        self.__firebase_service.batch_update(updated_gifts)
+        print(f"✅ Updated {len(updated_gifts)} gifts by NFTs from Portals Market API.")

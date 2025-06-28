@@ -37,29 +37,6 @@ class PortalsController:
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
     }
 
-    def __load_portals_nfts(self, collection_id: str, offset: int = 0, limit: int = 100) -> list[PortalsNFT]:
-        """
-        Fetches NFTs from the Portals Market API for a given collection ID.
-        """
-        url = f"https://portals-market.com/api/nfts/search?offset={offset}&limit={limit}&collection_id={collection_id}"
-        headers = self.__generate_headers(reffer='https://portals-market.com/collection')
-
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            api_response = NFTResponse(**data)
-            return api_response.results
-
-        except requests.exceptions.HTTPError as err:
-            raise Exception(f"❌ load_portals_nfts HTTP error occurred: {err}")
-        except requests.exceptions.RequestException as err:
-            raise Exception(f"❌ load_portals_nfts Request error occurred: {err}")
-        
-    #
-    # NFT methods
-    #
-
     def portals_nfts_search(self, external_collection_number: str) -> List[PortalsNFT]:
         """
         Fetches a single NFT by its portals_id from the Portals Market API.
