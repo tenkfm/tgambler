@@ -66,6 +66,7 @@ class PortalsController:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
             data = response.json()
+
             api_response = NFTResponse(**data)
             return api_response.results
 
@@ -84,12 +85,11 @@ class PortalsController:
                 print(f"❌ Gift {gift.id} has no valid payload.")
                 continue
             
-            portals_nft = next((nft for nft in nfts if nft.external_collection_number == gift.payload.external_collection_number), None)
+            portals_nft = next((n for n in nfts if n.id == gift.payload.id), None)
             if not portals_nft:
                 print(f"❌ No matching NFT found for gift {gift.id} with external_collection_number {gift.payload.external_collection_number}.")
                 continue
             
-
             gift.update_payload(payload=portals_nft)
             updated_gifts.append(gift)
         

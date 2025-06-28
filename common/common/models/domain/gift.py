@@ -75,7 +75,7 @@ class Gift(FirebaseObject):
         :param payload: The new payload to set.
         """
         if isinstance(payload, (PortalsNFT)):
-            self.volume = float(payload.price) * 100
+            self.volume = int(float(payload.price) * 100)
             self.payload = payload
             
         elif isinstance(payload, TONReward):

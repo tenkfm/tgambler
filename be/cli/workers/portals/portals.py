@@ -23,18 +23,19 @@ if __name__ == "__main__":
     print("Createing PortalsController instance...")
     controller = PortalsController(firebase_service=container.firebase_service)
 
-    groups = controller.fetch_gifts()
+    gift_groups = controller.fetch_gifts()
     
-
     print("\n------ Sync Portals Market nfts 🕣 ------")
-    for key in groups.keys():
-        print(f"Processing group with key: {key}")
-        gifts = groups[key]
-        nfts = controller.portals_nfts_search(external_collection_number=key)
+    for external_collection_number in gift_groups.keys():
+        print(f"\n------ Start sync {external_collection_number} nfts 🕣 ------")
+        print(f"Processing group with external_collection_number: {external_collection_number}")
+        gifts = gift_groups[external_collection_number]
+        nfts = controller.portals_nfts_search(external_collection_number=external_collection_number)
         if not nfts:
-            print(f"No NFTs found for external_collection_number: {key}")
+            print(f"No NFTs found for external_collection_number: {external_collection_number}")
             continue
         
         controller.update_gifts(gifts, nfts)
+        print(f"------ Sync {external_collection_number} nfts done ✅ ------")
     
-    print("------ Sync Portals Market nfts done ✅ ------\n")
+    print("n------ Sync Portals Market nfts done 🏁 ------\n")
