@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+
+<div class="col-lg-6">
+    <div class="element-wrapper">
+      <h6 class="element-header">
+        Case
+      </h6>
+      <div class="element-box">
+        <form method="post">
+          <h5 class="form-header">
+            ID - {{ form.initial.id }}
+          </h5>
+
+          {% csrf_token %}
+          {{ form.as_p }}
+
+          <div class="form-buttons-w">
+            <button class="btn btn-primary" type="submit"> Submit</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

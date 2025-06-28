@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import home, cases, users, user, wallets, wallet, transactions, transaction, topup_requests, topup_request, case_openings, case_opening
+from .views import home, cases, case, case_gifts, users, user, wallets, wallet, transactions, transaction, topup_requests, topup_request, case_openings, case_opening
 
 urlpatterns = [
     path('', home, name='home'),
     
     path('cases/', cases, name='cases'),
+    path('cases/<str:id>/edit/', case, name='case'),
+    path('cases/<str:id>/gifts/', case_gifts, name='case_gifts'),
     
     path('users/', users, name='users'),
     path('users/<str:id>/edit/', user, name='user'),

@@ -7,23 +7,29 @@ case_router = APIRouter(prefix="/api/case", tags=["cases"])
 
 @case_router.get("/")
 @router_try_wrapper
-async def get_active_cases():
+async def get_active_cases(x_token: str = Header(...)):
     """
     🧾 Fetch all active cases.
     :return: A list of active cases.
     """
+    user_id = container.user_ctonroller.validate_token(x_token)
+
     cases = container.case_controller.get_active_cases()
     return {"cases": cases}
     
 
 @case_router.get("/{case_id}/info")
 @router_try_wrapper
-async def get_case_info(case_id: str):
+async def get_case_info(case_id: str, x_token: str = Header(...)):
     """
     ℹ Fetch detailed information about a specific case by its ID.
     :param case_id: The ID of the case to fetch.
     :return: Detailed information about the case.
     """
+    user_id = container.user_ctonroller.validate_token(x_token)
+
+    raise HTTPException(status_code=503, detail="Service Unavailable")
+
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
@@ -33,34 +39,21 @@ async def get_case_info(case_id: str):
 
 @case_router.get("/{case_id}/gifts")
 @router_try_wrapper
-async def get_case_gifts(case_id: str):
+async def get_case_gifts(case_id: str, x_token: str = Header(...)):
     """
     🎁 Fetch all active gifts for a specific case.
     :param case_id: The ID of the case for which to fetch gifts.
     :return: A list of active gifts associated with the specified case.
     """
+
+    user_id = container.user_ctonroller.validate_token(x_token)
+
     if not case_id:
         raise HTTPException(status_code=400, detail="Case ID is required")
     
     gifts = container.case_controller.get_case_gifts(case_id)
     return {"gifts": gifts}
 
-
-@case_router.post("/{case_id}/gifts")
-@router_try_wrapper
-async def add_gift_to_case(case_id: str, gift: Gift):
-    """
-    ➕ Add a new gift to the specified case.
-    :param case_id: The ID of the case to which the gift belongs.
-    :param gift: The Gift object to be added.
-    :return: The added Gift object with its ID.
-    """
-    if not case_id:
-        raise HTTPException(status_code=400, detail="Case ID is required")
-    
-    container.case_controller.add_gift(case_id, gift)
-    return {"status": "ok"}
-    
 
 @case_router.post("/{case_id}/open")
 @router_try_wrapper
@@ -108,3 +101,14 @@ async def save_openning(openning_id: str, x_token: str = Header(...)):
     user_id = container.user_ctonroller.validate_token(x_token)
     # Save an existing case opening
     return container.case_controller.save_to_inventory(openning_id, user_id)
+
+@case_router.post("/stream")
+@router_try_wrapper
+async def stream(x_token: str = Header(...)):
+    """
+    It returns the live stream of case openings.
+    """
+
+    user_id = container.user_ctonroller.validate_token(x_token)
+    # Save an existing case opening
+    return {}

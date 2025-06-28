@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+                <div class="col-sm-12">
+                  <div class="element-wrapper">
+                    <h6 class="element-header">
+                      Cases
+                    </h6>
+                    <div class="element-content">
+                      <div class="row">
+                        <button class="col-sm-4 col-xxxl-1 btn btn-primary btn-rounded" type="button">Create Case</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+  <div class="element-wrapper">
+  <div class="element-box">
+      <div class="table-responsive">
+        <table class="table table-lightborder">
+          <thead>
+            <tr>
+              <th>
+                ID
+              </th>
+              <th>
+                Name
+              </th>
+              <th class="text-center">
+                Image
+              </th>
+              <th class="text-right">
+                Cost
+              </th>
+              <th class="text-center">
+                Is Active
+              </th>
+              <th  class="text-center">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for case in cases %}
+            <tr>
+              <td class="nowrap">
+                  {{ case.id }}
+              </td>
+              <td>
+                {{ case.name }}
+              </td>
+              <td class="text-center">
+                <img alt="" src="{{ case.image_url }}" width="50px">
+              </td>
+              <td class="text-right">
+                {{ case.cost }}
+              </td>
+              <td class="text-center">
+                {% if case.is_active %}
+                <div class="status-pill green" data-title="Active" data-toggle="tooltip" data-original-title="" title=""></div>
+                {% else %}
+                <div class="status-pill red" data-title="Inactive" data-toggle="tooltip" data-original-title="" title=""></div>
+                {% endif %}
+              </td>
+              <td class="row-actions text-center">
+                <a href="{% url 'case' case.id %}">
+                  <i class="os-icon os-icon-ui-49"></i>
+                </a>
+                <a href="{% url 'case_gifts' case.id %}">
+                  <i class="os-icon os-icon-ui-51"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+
+{% endblock %}
